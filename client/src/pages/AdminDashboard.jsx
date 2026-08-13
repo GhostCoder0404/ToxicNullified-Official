@@ -164,9 +164,17 @@ export default function AdminDashboard() {
   };
 
   const handleDeleteTourney = async (tId) => {
-    if (window.confirm('Are you sure you want to delete this tournament and all registrations/standings?')) {
-      await deleteTournament(tId, token);
-      loadDashboardData();
+    if (!window.confirm('Are you sure you want to delete this tournament and all its registrations and standings?')) return;
+    try {
+      const res = await deleteTournament(tId, token);
+      if (res.success) {
+        await loadDashboardData();
+      } else {
+        alert('Failed to delete tournament: ' + (res.message || 'Unknown error'));
+      }
+    } catch (err) {
+      console.error('Delete tournament error:', err);
+      alert('Error deleting tournament. Please try again.');
     }
   };
 
