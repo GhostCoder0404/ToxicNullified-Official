@@ -1,0 +1,16 @@
+{
+  "name": "toxic-nullified-official",
+  "version": "1.0.0",
+  "description": "ToxicNullified Official BGMI Tournament Platform",
+  "main": "server/index.js",
+  "scripts": {
+    "setup": "npm install && cd server && npm install && cd ../client && npm install",
+    "server": "cd server && npm start",
+    "client": "cd client && npm run dev",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "seed": "cd server && npm run seed"
+  },
+  "dependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
