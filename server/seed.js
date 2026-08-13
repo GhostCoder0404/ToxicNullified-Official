@@ -5,16 +5,21 @@ const seedData = async () => {
   try {
     await initSchema();
 
-    // 1. Seed Admin User
+    // 1. Seed / Update Admin User
+    const hashedPassword = process.env.ADMIN_PASSWORD 
+      ? await bcrypt.hash(process.env.ADMIN_PASSWORD, 10)
+      : '$2a$10$k/2YhjFjM0SsA/fpqtkhcOxr7kVWMqBp5sN3I0d.QQgkya4Zu3dUK';
     const existingAdmin = await get(`SELECT * FROM users WHERE username = ?`, ['admin']);
     if (!existingAdmin) {
-      const hashedPassword = await bcrypt.hash('toxic123', 10);
       await run(`INSERT INTO users (username, password, role) VALUES (?, ?, ?)`, [
         'admin',
         hashedPassword,
         'admin'
       ]);
-      console.log('Seeded default admin user: username="admin", password="toxic123"');
+      console.log('Seeded admin user account.');
+    } else {
+      await run(`UPDATE users SET password = ? WHERE username = ?`, [hashedPassword, 'admin']);
+      console.log('Updated admin user password.');
     }
 
     // 2. Seed Tournaments

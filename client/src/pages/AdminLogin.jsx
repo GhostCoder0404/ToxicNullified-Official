@@ -4,8 +4,8 @@ import { Lock, User, KeyRound, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export default function AdminLogin() {
-  const [username, setUsername] = useState('admin');
-  const [password, setPassword] = useState('toxic123');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -125,9 +125,7 @@ export default function AdminLogin() {
           </button>
         </form>
 
-        <div style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-muted)', background: 'rgba(255,255,255,0.03)', padding: '0.6rem', borderRadius: '6px' }}>
-          Default Credentials: username: <code>admin</code> | password: <code>toxic123</code>
-        </div>
+
 
       </div>
     </div>

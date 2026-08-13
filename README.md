@@ -31,11 +31,10 @@ ToxicNullified Official is a full-stack, modern esports tournament website and m
 
 ---
 
-## 🔐 Default Admin Credentials
+## 🔐 Admin Authentication Portal
 
 - **Admin Login URL**: `http://localhost:3000/admin/login`
-- **Username**: `admin`
-- **Password**: `toxic123`
+- **Access**: Restricted to authorized tournament administrators.
 
 ---
 
