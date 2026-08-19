@@ -12,6 +12,7 @@ export default function Navbar() {
     { name: 'Home', path: '/' },
     { name: 'Tournaments', path: '/tournaments' },
     { name: 'Rules & Terms', path: '/rules' },
+    { name: 'Creators', path: '/creators' },
   ];
 
   const isActive = (path) => location.pathname === path;

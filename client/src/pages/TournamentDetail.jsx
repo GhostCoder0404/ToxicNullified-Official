@@ -204,7 +204,7 @@ export default function TournamentDetail() {
       </div>
 
       {/* TABBED SECTIONS NAVIGATION */}
-      <div style={{
+      <div className="detail-tabs" style={{
         display: 'flex',
         gap: '0.6rem',
         borderBottom: '1px solid rgba(0, 243, 255, 0.2)',
@@ -325,7 +325,7 @@ export default function TournamentDetail() {
             </div>
             <div style={{ background: 'rgba(6, 8, 12, 0.6)', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
               <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem', textTransform: 'uppercase' }}>Map Rotation</span>
-              <p style={{ color: '#fff', fontWeight: 700, fontSize: '1.1rem' }}>Erangel, Miramar, Sanhok, Vikendi</p>
+              <p style={{ color: '#fff', fontWeight: 700, fontSize: '1.1rem' }}>Erangel, Rondo &amp; Miramar</p>
             </div>
             <div style={{ background: 'rgba(6, 8, 12, 0.6)', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
               <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem', textTransform: 'uppercase' }}>Device Policy</span>
@@ -445,7 +445,7 @@ export default function TournamentDetail() {
           tournament={tournament}
           onClose={() => setShowRegModal(false)}
           onSuccess={() => {
-            setShowRegModal(false);
+            // Don't close modal — it shows the success screen with Discord button
             fetchTournamentById(id).then(res => {
               if (res.success) setTournament(res.tournament);
             });

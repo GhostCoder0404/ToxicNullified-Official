@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -11,7 +12,13 @@ const upload = require('./middleware/upload');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors());
+// CORS: allow Vercel frontend in production, all origins in local dev
+const allowedOrigin = process.env.ALLOWED_ORIGIN || '*';
+app.use(cors({
+  origin: allowedOrigin,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -359,7 +366,43 @@ app.patch('/api/registrations/:id/status', verifyToken, async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid status value' });
     }
 
+    // Get current registration before modifying
+    const reg = await get(`SELECT status, tournament_id FROM registrations WHERE id = ?`, [regId]);
+    if (!reg) {
+      return res.status(404).json({ success: false, message: 'Registration not found' });
+    }
+
+    const prevStatus = reg.status;
+
+    if (status === 'Rejected') {
+      // HARD DELETE: Remove the registration entirely from the database
+      await run(`DELETE FROM registrations WHERE id = ?`, [regId]);
+
+      // Decrement registered_teams count (only if the previous status was not already Rejected)
+      if (prevStatus !== 'Rejected') {
+        await run(
+          `UPDATE tournaments SET registered_teams = MAX(0, registered_teams - 1) WHERE id = ?`,
+          [reg.tournament_id]
+        );
+      }
+
+      return res.json({
+        success: true,
+        deleted: true,
+        message: 'Registration rejected and permanently removed from records'
+      });
+    }
+
+    // For Approved / Pending — just update status
     await run(`UPDATE registrations SET status = ? WHERE id = ?`, [status, regId]);
+
+    // If switching FROM Rejected to something else → increment count back
+    if (prevStatus === 'Rejected') {
+      await run(
+        `UPDATE tournaments SET registered_teams = registered_teams + 1 WHERE id = ?`,
+        [reg.tournament_id]
+      );
+    }
 
     res.json({ success: true, message: `Registration status updated to ${status}` });
   } catch (err) {
@@ -367,6 +410,7 @@ app.patch('/api/registrations/:id/status', verifyToken, async (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to update registration status' });
   }
 });
+
 
 // -------------------------------------------------------------
 // QR CODE GENERATION ENDPOINT

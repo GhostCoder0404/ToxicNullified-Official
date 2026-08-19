@@ -141,7 +141,7 @@ export default function Tournaments() {
           <p style={{ marginTop: '0.4rem' }}>Try clearing or adjusting your search filters above.</p>
         </div>
       ) : (
-        <div style={{
+        <div className="tournament-grid" style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
           gap: '1.8rem'

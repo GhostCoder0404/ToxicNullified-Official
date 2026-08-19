@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { QrCode, Copy, Check, ShieldCheck, AlertCircle } from 'lucide-react';
 import { fetchQRCode } from '../services/api';
 
-export default function QRCodeDisplay({ upiId = 'toxicnullified@upi', amount = 0, title = 'ToxicNullified Tournament Entry' }) {
+export default function QRCodeDisplay({ upiId = 'tnfghostislive@axl', amount = 500, title = 'ToxicNullified Tournament Entry' }) {
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -76,7 +76,7 @@ export default function QRCodeDisplay({ upiId = 'toxicnullified@upi', amount = 0
       <div style={{
         margin: '1rem 0',
         background: 'rgba(0, 243, 255, 0.06)',
-        border: '1px border rgba(0, 243, 255, 0.2)',
+        border: '1px solid rgba(0, 243, 255, 0.2)',
         borderRadius: '8px',
         padding: '0.6rem 1rem',
         display: 'flex',

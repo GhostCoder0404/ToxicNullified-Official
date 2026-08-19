@@ -95,6 +95,18 @@ export default function Home() {
             <Link to="/tournaments" className="btn-primary" style={{ padding: '0.9rem 2.2rem', fontSize: '1.05rem' }}>
               <Flame size={20} /> Browse Tournaments
             </Link>
+            <Link to="/creators" className="btn-accent" style={{ 
+              padding: '0.9rem 2.2rem', 
+              fontSize: '1.05rem',
+              background: 'linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)',
+              boxShadow: '0 0 15px rgba(168, 85, 247, 0.4)',
+              color: '#fff',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem'
+            }}>
+              <Users size={20} /> Meet the Creators
+            </Link>
             <Link to="/rules" className="btn-secondary" style={{ padding: '0.9rem 2rem', fontSize: '1.05rem' }}>
               <Shield size={20} /> Rules & Guidelines
             </Link>
@@ -113,7 +125,7 @@ export default function Home() {
             border: '1px solid rgba(0, 243, 255, 0.2)',
             borderRadius: '12px',
             boxShadow: '0 10px 30px rgba(0, 0, 0, 0.6)'
-          }}>
+          }} className="hero-stats-bar">
             <div>
               <span style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--gold)', fontFamily: 'var(--font-heading)' }}>
                 ₹ 5,00,000+
@@ -149,7 +161,7 @@ export default function Home() {
       {/* FEATURED TOURNAMENTS SECTION */}
       {/* ------------------------------------------------------------- */}
       <section style={{ maxWidth: '1200px', margin: '4rem auto', padding: '0 1.5rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2rem' }}>
+        <div className="section-header-flex" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2rem' }}>
           <div>
             <span style={{ color: 'var(--cyan)', fontFamily: 'var(--font-heading)', fontSize: '0.85rem', letterSpacing: '1.5px', textTransform: 'uppercase' }}>
               Action Ready
@@ -169,7 +181,7 @@ export default function Home() {
             Loading tournaments...
           </div>
         ) : (
-          <div style={{
+          <div className="tournament-grid" style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
             gap: '1.8rem'

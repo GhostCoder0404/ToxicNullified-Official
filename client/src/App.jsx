@@ -8,6 +8,7 @@ import TournamentDetail from './pages/TournamentDetail';
 import Rules from './pages/Rules';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
+import Creators from './pages/Creators';
 import { AuthProvider } from './context/AuthContext';
 
 // Scroll to top on every route change
@@ -34,6 +35,7 @@ export default function App() {
               <Route path="/rules" element={<Rules />} />
               <Route path="/admin/login" element={<AdminLogin />} />
               <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/creators" element={<Creators />} />
             </Routes>
           </main>
           <Footer />

@@ -1,4 +1,8 @@
-const API_BASE = '/api';
+// In production: set VITE_API_BASE_URL to your Render backend URL (e.g. https://toxicnullified-api.onrender.com)
+// In local dev: falls back to /api (proxied by Vite)
+const API_BASE = import.meta.env.VITE_API_BASE_URL
+  ? `${import.meta.env.VITE_API_BASE_URL}/api`
+  : '/api';
 
 export const fetchTournaments = async (params = {}) => {
   const query = new URLSearchParams(params).toString();

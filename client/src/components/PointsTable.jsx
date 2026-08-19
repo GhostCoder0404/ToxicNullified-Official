@@ -9,7 +9,7 @@ export default function PointsTable({ standings = [] }) {
         textAlign: 'center',
         background: 'rgba(10, 13, 20, 0.5)',
         borderRadius: '12px',
-        border: '1px border var(--border-color)',
+        border: '1px solid var(--border-color)',
         color: 'var(--text-muted)'
       }}>
         <Trophy size={40} color="var(--text-muted)" style={{ opacity: 0.5, marginBottom: '0.8rem' }} />

@@ -9,6 +9,8 @@ import {
   fetchAdminStats, fetchTournaments, fetchRegistrations, updateRegistrationStatus,
   createTournament, updateTournament, deleteTournament, updateStandings, fetchTournamentById
 } from '../services/api';
+import { db } from '../services/firebase';
+import { collection, query as fbQuery, where, getDocs, deleteDoc, doc } from 'firebase/firestore';
 
 export default function AdminDashboard() {
   const { token, isAuthenticated, logout } = useAuth();
@@ -29,6 +31,14 @@ export default function AdminDashboard() {
   const [tournaments, setTournaments] = useState([]);
   const [registrations, setRegistrations] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Toast notification state
+  const [toast, setToast] = useState(null); // { message, type: 'success' | 'error' }
+
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   // Filters
   const [regStatusFilter, setRegStatusFilter] = useState('All');
@@ -79,12 +89,40 @@ export default function AdminDashboard() {
   // -------------------------------------------------------------
   const handleStatusUpdate = async (regId, newStatus) => {
     try {
+      if (newStatus === 'Rejected') {
+        // Optimistic UI: immediately remove the row from local state
+        setRegistrations(prev => prev.filter(r => r.id !== regId));
+
+        // Also delete from Firebase Firestore if a mirrored doc exists
+        try {
+          const q = fbQuery(
+            collection(db, 'registrations'),
+            where('sqliteId', '==', regId)
+          );
+          const snapshot = await getDocs(q);
+          const deletions = snapshot.docs.map(d => deleteDoc(doc(db, 'registrations', d.id)));
+          await Promise.all(deletions);
+        } catch (fbErr) {
+          // Firebase deletion failure is non-fatal; SQLite record is already deleted
+          console.warn('Firebase cleanup warning:', fbErr);
+        }
+      }
+
       const res = await updateRegistrationStatus(regId, newStatus, token);
       if (res.success) {
+        // Reload everything to sync stats counters (totalRegistrations, approvedRegistrations, etc.)
         loadDashboardData();
+        if (newStatus === 'Rejected') {
+          showToast('Team rejected and permanently removed.', 'error');
+        } else if (newStatus === 'Approved') {
+          showToast('Team approved successfully!', 'success');
+        }
       }
     } catch (err) {
       console.error('Status update error:', err);
+      showToast('Action failed. Please try again.', 'error');
+      // Revert optimistic UI on error
+      loadDashboardData();
     }
   };
 
@@ -233,7 +271,32 @@ export default function AdminDashboard() {
 
   return (
     <div style={{ maxWidth: '1300px', margin: '2rem auto 4rem auto', padding: '0 1.5rem', minHeight: '90vh' }}>
-      
+
+      {/* TOAST NOTIFICATION */}
+      {toast && (
+        <div style={{
+          position: 'fixed',
+          top: '1.5rem',
+          right: '1.5rem',
+          zIndex: 9999,
+          background: toast.type === 'success'
+            ? 'linear-gradient(135deg, rgba(0,255,136,0.15), rgba(10,13,20,0.95))'
+            : 'linear-gradient(135deg, rgba(255,50,80,0.2), rgba(10,13,20,0.95))',
+          border: `1px solid ${toast.type === 'success' ? 'var(--green)' : 'var(--crimson)'}`,
+          color: toast.type === 'success' ? 'var(--green)' : '#ff5070',
+          padding: '0.9rem 1.5rem',
+          borderRadius: '10px',
+          fontFamily: 'var(--font-sub)',
+          fontWeight: 700,
+          fontSize: '0.95rem',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
+          animation: 'fadeIn 0.3s ease',
+          maxWidth: '360px'
+        }}>
+          {toast.message}
+        </div>
+      )}
+
       {/* Top Admin Header Bar */}
       <div style={{
         display: 'flex',
@@ -242,7 +305,7 @@ export default function AdminDashboard() {
         alignItems: 'center',
         marginBottom: '2rem',
         gap: '1rem'
-      }}>
+      }} className="admin-header-bar">
         <div>
           <span className="badge badge-ongoing" style={{ marginBottom: '0.4rem' }}>
             <Lock size={12} /> Protected Admin Panel
@@ -252,7 +315,7 @@ export default function AdminDashboard() {
           </h1>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'center' }}>
+        <div className="admin-header-actions" style={{ display: 'flex', gap: '0.8rem', alignItems: 'center' }}>
           <button onClick={handleExportCSV} className="btn-secondary">
             <Download size={16} /> Export Registrations (CSV)
           </button>
@@ -318,7 +381,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* DASHBOARD TAB SELECTOR */}
-      <div style={{ display: 'flex', gap: '0.8rem', borderBottom: '1px solid rgba(0, 243, 255, 0.2)', marginBottom: '2rem' }}>
+      <div className="admin-tabs" style={{ display: 'flex', gap: '0.8rem', borderBottom: '1px solid rgba(0, 243, 255, 0.2)', marginBottom: '2rem' }}>
         <button
           onClick={() => setActiveTab('registrations')}
           style={{
@@ -688,7 +751,7 @@ export default function AdminDashboard() {
                 <input type="text" value={tourneyForm.title} onChange={e => setTourneyForm({ ...tourneyForm, title: e.target.value })} className="form-input" required />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.8rem' }}>
+              <div className="admin-form-grid-3" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.8rem' }}>
                 <div className="form-group">
                   <label className="form-label">Game Mode</label>
                   <input type="text" value={tourneyForm.game_mode} onChange={e => setTourneyForm({ ...tourneyForm, game_mode: e.target.value })} className="form-input" />
@@ -711,7 +774,7 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.8rem' }}>
+              <div className="admin-form-grid-3" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.8rem' }}>
                 <div className="form-group">
                   <label className="form-label">Prize Pool (₹)</label>
                   <input type="number" value={tourneyForm.prize_pool} onChange={e => setTourneyForm({ ...tourneyForm, prize_pool: e.target.value })} className="form-input" required />
