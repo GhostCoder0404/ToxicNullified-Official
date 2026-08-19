@@ -5,11 +5,12 @@ const seedData = async () => {
   try {
     await initSchema();
 
-    // Seed / Update Admin User only — tournaments are managed exclusively via Admin Panel
-    const hashedPassword = process.env.ADMIN_PASSWORD
-      ? await bcrypt.hash(process.env.ADMIN_PASSWORD, 10)
-      : '$2a$10$k/2YhjFjM0SsA/fpqtkhcOxr7kVWMqBp5sN3I0d.QQgkya4Zu3dUK';
+    if (!process.env.ADMIN_PASSWORD) {
+      console.warn('⚠️ [SECURITY] ADMIN_PASSWORD env variable is not set! Skipping admin seed.');
+      return;
+    }
 
+    const hashedPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD, 10);
     const existingAdmin = await get(`SELECT * FROM users WHERE username = ?`, ['admin']);
     if (!existingAdmin) {
       await run(`INSERT INTO users (username, password, role) VALUES (?, ?, ?)`, [
@@ -17,10 +18,10 @@ const seedData = async () => {
         hashedPassword,
         'admin'
       ]);
-      console.log('Admin user created.');
+      console.log('Admin user created from ADMIN_PASSWORD env variable.');
     } else {
       await run(`UPDATE users SET password = ? WHERE username = ?`, [hashedPassword, 'admin']);
-      console.log('Admin user password updated.');
+      console.log('Admin user password updated from ADMIN_PASSWORD env variable.');
     }
 
     console.log('Database schema ready. No dummy tournament data seeded.');
