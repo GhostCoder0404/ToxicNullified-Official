@@ -13,9 +13,17 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // CORS: allow Vercel frontend in production, all origins in local dev
-const allowedOrigin = process.env.ALLOWED_ORIGIN || '*';
+const allowedOrigin = process.env.ALLOWED_ORIGIN ? process.env.ALLOWED_ORIGIN.trim().replace(/\/+$/, '') : '*';
 app.use(cors({
-  origin: allowedOrigin,
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigin === '*') return callback(null, true);
+    const cleanOrigin = origin.trim().replace(/\/+$/, '');
+    if (cleanOrigin === allowedOrigin || cleanOrigin.includes('vercel.app')) {
+      return callback(null, true);
+    }
+    return callback(null, true);
+  },
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));

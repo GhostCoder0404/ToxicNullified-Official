@@ -26,7 +26,7 @@ export default function AdminLogin() {
       }
     } catch (err) {
       console.error('Login error:', err);
-      setError('Connection error logging in');
+      setError(err.message || 'Connection error logging in. Please check backend server status.');
     } finally {
       setLoading(false);
     }

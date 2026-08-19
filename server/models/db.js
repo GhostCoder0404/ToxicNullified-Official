@@ -120,6 +120,23 @@ const initSchema = async () => {
   `);
 
   console.log('Database tables verified / created successfully.');
+
+  // Auto-ensure Admin User exists
+  try {
+    const bcrypt = require('bcryptjs');
+    const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+    const hashedPassword = await bcrypt.hash(adminPassword, 10);
+    const existingAdmin = await get(`SELECT * FROM users WHERE username = ?`, ['admin']);
+    if (!existingAdmin) {
+      await run(`INSERT INTO users (username, password, role) VALUES (?, ?, ?)`, ['admin', hashedPassword, 'admin']);
+      console.log('✅ Admin user ("admin") created successfully.');
+    } else if (process.env.ADMIN_PASSWORD) {
+      await run(`UPDATE users SET password = ? WHERE username = ?`, [hashedPassword, 'admin']);
+      console.log('✅ Admin user password updated from ADMIN_PASSWORD environment variable.');
+    }
+  } catch (adminErr) {
+    console.error('Error seeding admin user:', adminErr);
+  }
 };
 
 module.exports = {

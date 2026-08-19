@@ -1,7 +1,9 @@
 // In production: set VITE_API_BASE_URL to your Render backend URL (e.g. https://toxicnullified-api.onrender.com)
 // In local dev: falls back to /api (proxied by Vite)
-const API_BASE = import.meta.env.VITE_API_BASE_URL
-  ? `${import.meta.env.VITE_API_BASE_URL}/api`
+const rawApiUrl = import.meta.env.VITE_API_BASE_URL || '';
+const cleanApiUrl = rawApiUrl.trim().replace(/\/+$/, '');
+const API_BASE = cleanApiUrl
+  ? (cleanApiUrl.endsWith('/api') ? cleanApiUrl : `${cleanApiUrl}/api`)
   : '/api';
 
 export const fetchTournaments = async (params = {}) => {
@@ -107,10 +109,22 @@ export const fetchAdminStats = async (token) => {
 };
 
 export const loginAdmin = async (username, password) => {
-  const res = await fetch(`${API_BASE}/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password })
-  });
-  return res.json();
+  try {
+    const res = await fetch(`${API_BASE}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return { success: false, message: data.message || `Server returned status ${res.status}` };
+    }
+    return data;
+  } catch (err) {
+    console.error('API loginAdmin network error:', err);
+    return {
+      success: false,
+      message: 'Unable to reach backend server. If Render server is sleeping (cold start), please wait 20-30 seconds and try again.'
+    };
+  }
 };
