@@ -110,29 +110,51 @@ export default function Navbar() {
 
           {isAuthenticated ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <Link to="/admin" className="btn-accent" style={{ padding: '0.5rem 1.2rem', fontSize: '0.85rem' }}>
+              <Link
+                to="/admin"
+                style={{
+                  textDecoration: 'none',
+                  fontFamily: 'var(--font-sub)',
+                  fontSize: '1.05rem',
+                  fontWeight: 600,
+                  color: isActive('/admin') ? 'var(--cyan)' : 'var(--text-muted)',
+                  transition: 'color 0.2s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  borderBottom: isActive('/admin') ? '2px solid var(--cyan)' : '2px solid transparent',
+                  paddingBottom: '0.2rem'
+                }}
+              >
                 <Lock size={15} /> Admin Dashboard
               </Link>
               <button
                 onClick={logout}
                 className="btn-secondary"
-                style={{ padding: '0.5rem 0.8rem', fontSize: '0.85rem' }}
+                style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}
                 title="Logout Admin"
               >
                 <LogOut size={16} />
               </button>
             </div>
           ) : (
-            <Link to="/admin/login" style={{
-              textDecoration: 'none',
-              color: 'var(--text-muted)',
-              fontFamily: 'var(--font-sub)',
-              fontSize: '0.95rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.4rem'
-            }}>
-              <Lock size={14} /> Admin Access
+            <Link
+              to="/admin/login"
+              style={{
+                textDecoration: 'none',
+                fontFamily: 'var(--font-sub)',
+                fontSize: '1.05rem',
+                fontWeight: 600,
+                color: isActive('/admin/login') ? 'var(--cyan)' : 'var(--text-muted)',
+                transition: 'color 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                borderBottom: isActive('/admin/login') ? '2px solid var(--cyan)' : '2px solid transparent',
+                paddingBottom: '0.2rem'
+              }}
+            >
+              <Lock size={15} /> Admin Login
             </Link>
           )}
 
@@ -188,18 +210,33 @@ export default function Navbar() {
             <Link
               to="/admin"
               onClick={() => setMobileMenuOpen(false)}
-              className="btn-accent"
-              style={{ justifyContent: 'center' }}
+              style={{
+                textDecoration: 'none',
+                fontFamily: 'var(--font-heading)',
+                fontSize: '1.1rem',
+                color: isActive('/admin') ? 'var(--cyan)' : 'var(--text-main)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}
             >
-              <Lock size={16} /> Admin Panel
+              <Lock size={18} /> Admin Dashboard
             </Link>
           ) : (
             <Link
               to="/admin/login"
               onClick={() => setMobileMenuOpen(false)}
-              style={{ color: 'var(--text-muted)', textDecoration: 'none', fontFamily: 'var(--font-sub)' }}
+              style={{
+                textDecoration: 'none',
+                fontFamily: 'var(--font-heading)',
+                fontSize: '1.1rem',
+                color: isActive('/admin/login') ? 'var(--cyan)' : 'var(--text-main)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}
             >
-              Admin Login
+              <Lock size={18} /> Admin Login
             </Link>
           )}
 

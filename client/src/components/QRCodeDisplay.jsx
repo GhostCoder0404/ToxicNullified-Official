@@ -50,17 +50,14 @@ export default function QRCodeDisplay({ upiId = 'tnfghostislive@axl', amount = 5
         margin: '0.5rem 0',
         boxShadow: '0 0 20px rgba(0, 243, 255, 0.3)'
       }}>
-        {loading ? (
-          <div style={{ width: '180px', height: '180px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000' }}>
-            Generating QR...
-          </div>
-        ) : (
-          <img
-            src={qrCodeUrl}
-            alt="Payment QR Code"
-            style={{ width: '180px', height: '180px', display: 'block' }}
-          />
-        )}
+        <img
+          src="/qr.jpeg"
+          onError={(e) => {
+            if (qrCodeUrl) e.target.src = qrCodeUrl;
+          }}
+          alt="Official ToxicNullified Payment QR Code"
+          style={{ width: '200px', height: '200px', objectFit: 'contain', borderRadius: '8px', display: 'block' }}
+        />
       </div>
 
       <div style={{ marginTop: '0.8rem' }}>

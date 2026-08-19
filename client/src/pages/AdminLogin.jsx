@@ -90,7 +90,7 @@ export default function AdminLogin() {
               <input
                 type="text"
                 className="form-input"
-                style={{ paddingLeft: '2.4rem' }}
+                style={{ paddingLeft: '2.4rem', fontFamily: 'var(--font-sub)', fontWeight: 600, fontSize: '1rem' }}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="admin"
@@ -106,7 +106,7 @@ export default function AdminLogin() {
               <input
                 type="password"
                 className="form-input"
-                style={{ paddingLeft: '2.4rem' }}
+                style={{ paddingLeft: '2.4rem', fontFamily: 'var(--font-sub)', fontWeight: 600, fontSize: '1rem' }}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
