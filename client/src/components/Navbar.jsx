@@ -33,11 +33,12 @@ export default function Navbar() {
         padding: '0.8rem 1.5rem',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-between'
+        justifyContent: 'space-between',
+        gap: '1.5rem'
       }}>
         
         {/* Logo */}
-        <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+        <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.6rem', flexShrink: 0 }}>
           <div style={{
             width: '42px',
             height: '42px',
@@ -47,7 +48,8 @@ export default function Navbar() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 0 15px rgba(0, 243, 255, 0.4)'
+            boxShadow: '0 0 15px rgba(0, 243, 255, 0.4)',
+            flexShrink: 0
           }}>
             <div style={{
               width: '100%',
@@ -61,10 +63,10 @@ export default function Navbar() {
               <Trophy size={22} color="#00f3ff" />
             </div>
           </div>
-          <div>
+          <div style={{ whiteSpace: 'nowrap' }}>
             <span style={{
               fontFamily: 'var(--font-heading)',
-              fontSize: '1.25rem',
+              fontSize: '1.2rem',
               fontWeight: 900,
               color: '#fff',
               letterSpacing: '1px'
@@ -73,7 +75,7 @@ export default function Navbar() {
             </span>
             <span style={{
               display: 'block',
-              fontSize: '0.65rem',
+              fontSize: '0.6rem',
               color: 'var(--gold)',
               fontFamily: 'var(--font-sub)',
               letterSpacing: '2px',
@@ -85,7 +87,7 @@ export default function Navbar() {
         </Link>
 
         {/* Desktop Nav Links */}
-        <nav style={{ display: 'none', gap: '2rem', alignItems: 'center' }} className="desktop-nav">
+        <nav style={{ display: 'none', gap: '1.2rem', alignItems: 'center', flexWrap: 'nowrap' }} className="desktop-nav">
           {navLinks.map((link) => (
             <Link
               key={link.path}
@@ -93,7 +95,7 @@ export default function Navbar() {
               style={{
                 textDecoration: 'none',
                 fontFamily: 'var(--font-sub)',
-                fontSize: '1.05rem',
+                fontSize: '0.98rem',
                 fontWeight: 600,
                 color: isActive(link.path) ? 'var(--cyan)' : 'var(--text-muted)',
                 transition: 'color 0.2s ease',
@@ -101,7 +103,8 @@ export default function Navbar() {
                 alignItems: 'center',
                 gap: '0.3rem',
                 borderBottom: isActive(link.path) ? '2px solid var(--cyan)' : '2px solid transparent',
-                paddingBottom: '0.2rem'
+                paddingBottom: '0.2rem',
+                whiteSpace: 'nowrap'
               }}
             >
               {link.name}
@@ -109,32 +112,36 @@ export default function Navbar() {
           ))}
 
           {isAuthenticated ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
               <Link
                 to="/admin"
+                className="btn-accent"
                 style={{
-                  textDecoration: 'none',
-                  fontFamily: 'var(--font-sub)',
-                  fontSize: '1.05rem',
-                  fontWeight: 600,
-                  color: isActive('/admin') ? 'var(--cyan)' : 'var(--text-muted)',
-                  transition: 'color 0.2s ease',
-                  display: 'flex',
+                  padding: '0.45rem 0.9rem',
+                  fontSize: '0.82rem',
+                  whiteSpace: 'nowrap',
+                  display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '0.4rem',
-                  borderBottom: isActive('/admin') ? '2px solid var(--cyan)' : '2px solid transparent',
-                  paddingBottom: '0.2rem'
+                  gap: '0.3rem'
                 }}
               >
-                <Lock size={15} /> Admin Dashboard
+                <Lock size={14} /> Admin Panel
               </Link>
               <button
                 onClick={logout}
                 className="btn-secondary"
-                style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}
+                style={{
+                  padding: '0.45rem 0.6rem',
+                  fontSize: '0.82rem',
+                  color: '#ff4d79',
+                  borderColor: 'rgba(255, 42, 95, 0.4)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
                 title="Logout Admin"
               >
-                <LogOut size={16} />
+                <LogOut size={15} />
               </button>
             </div>
           ) : (
@@ -143,23 +150,24 @@ export default function Navbar() {
               style={{
                 textDecoration: 'none',
                 fontFamily: 'var(--font-sub)',
-                fontSize: '1.05rem',
+                fontSize: '0.98rem',
                 fontWeight: 600,
                 color: isActive('/admin/login') ? 'var(--cyan)' : 'var(--text-muted)',
                 transition: 'color 0.2s ease',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.4rem',
+                gap: '0.3rem',
                 borderBottom: isActive('/admin/login') ? '2px solid var(--cyan)' : '2px solid transparent',
-                paddingBottom: '0.2rem'
+                paddingBottom: '0.2rem',
+                whiteSpace: 'nowrap'
               }}
             >
-              <Lock size={15} /> Admin Login
+              <Lock size={14} /> Admin Access
             </Link>
           )}
 
-          <Link to="/tournaments" className="btn-primary">
-            <Flame size={16} /> Join Tournament
+          <Link to="/tournaments" className="btn-primary" style={{ padding: '0.5rem 1.1rem', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>
+            <Flame size={15} /> Join Tournament
           </Link>
         </nav>
 
