@@ -63,8 +63,79 @@ export default function TournamentDetail() {
   const {
     title, game_mode, format, prize_pool, entry_fee, max_teams,
     registered_teams, start_date, reg_end_date, map_rotation, organizer,
-    status, banner_url, poster_url, rules, schedule, prize_breakdown
+    status, banner_url, poster_url, rules, schedule, prize_breakdown,
+    rounds_format, groups_data
   } = tournament;
+
+  const defaultRounds = [
+    {
+      name: 'Qualifiers Round 1',
+      dates: '6th - 9th May 2026',
+      status: 'Upcoming',
+      description: 'All registered teams divided into groups. Top 12 teams per group advance to Round 2.',
+      map_schedule: 'Erangel & Miramar',
+      qualifying_slots: 'Top 12 Teams Advance'
+    },
+    {
+      name: 'Qualifiers Round 2',
+      dates: '11th - 14th May 2026',
+      status: 'Upcoming',
+      description: '32 Teams competing in 4 matches. Top 8 teams advance directly to Semi Finals.',
+      map_schedule: 'Erangel, Rondo & Miramar',
+      qualifying_slots: 'Top 8 to Semi Finals'
+    },
+    {
+      name: 'Qualifiers Round 3',
+      dates: '16th - 19th May 2026',
+      status: 'Upcoming',
+      description: 'Quarter finals round for qualifying teams.',
+      map_schedule: 'Erangel & Miramar',
+      qualifying_slots: 'Top 12 Advance'
+    },
+    {
+      name: 'Qualifiers Round 4',
+      dates: '28th - 31st May 2026',
+      status: 'Upcoming',
+      description: 'Playoffs stage for high seed contenders.',
+      map_schedule: 'Erangel, Rondo & Miramar',
+      qualifying_slots: 'Top 10 Advance'
+    },
+    {
+      name: 'Survival Stage',
+      dates: '2nd - 5th June, 2026',
+      status: 'Upcoming',
+      description: 'Wildcard battle stage for bottom bracket teams.',
+      map_schedule: 'Erangel & Miramar',
+      qualifying_slots: 'Top 4 Wildcards'
+    },
+    {
+      name: 'Semi Finals',
+      dates: '9th - 12th June, 2026',
+      status: 'Upcoming',
+      description: 'Top 24 Teams divided into 3 groups (A vs B, B vs C, A vs C).',
+      map_schedule: 'Erangel, Rondo, Miramar',
+      qualifying_slots: 'Top 16 to Grand Finals'
+    },
+    {
+      name: 'Last Chance',
+      dates: '13th - 14th June, 2026',
+      status: 'Upcoming',
+      description: 'Final decider match for remaining 2 final slots.',
+      map_schedule: 'Erangel & Miramar',
+      qualifying_slots: 'Top 2 Advance'
+    },
+    {
+      name: 'Grand Finals',
+      dates: '19th - 21st June, 2026',
+      status: 'Upcoming',
+      description: 'Final 16 Teams compete over 3 Days (18 Matches Total) for the ₹ 15,000 Prize Pool.',
+      map_schedule: 'All Maps (6 Matches / Day)',
+      qualifying_slots: 'Champion Title & Trophy'
+    }
+  ];
+
+  const activeRounds = Array.isArray(rounds_format) && rounds_format.length > 0 ? rounds_format : defaultRounds;
+  const activeGroups = Array.isArray(groups_data) ? groups_data : [];
 
   const filledPercent = Math.min(100, Math.round(((registered_teams || 0) / (max_teams || 64)) * 100));
   const officialPoster = poster_url || banner_url || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=800&q=80';
