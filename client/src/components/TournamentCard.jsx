@@ -32,36 +32,64 @@ export default function TournamentCard({ tournament, onRegisterClick }) {
       
       {/* Banner Header */}
       <div style={{
-        height: '160px',
+        height: '200px',
         position: 'relative',
-        backgroundImage: `url(${banner_url || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=800&q=80'})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center'
+        overflow: 'hidden',
+        background: '#06080c'
       }}>
+        {/* Blurred background backdrop so no empty side space */}
         <div style={{
           position: 'absolute',
           inset: 0,
-          background: 'linear-gradient(to top, rgba(10, 13, 20, 1) 0%, rgba(10, 13, 20, 0.4) 60%, rgba(0, 0, 0, 0.2) 100%)'
+          backgroundImage: `url(${banner_url || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=800&q=80'})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          filter: 'blur(16px) brightness(0.4)',
+          transform: 'scale(1.15)'
+        }} />
+
+        {/* Crisp foreground banner fitting perfectly without cropping */}
+        <img
+          src={banner_url || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=800&q=80'}
+          alt={title}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'contain',
+            zIndex: 1
+          }}
+        />
+
+        {/* Subtle gradient overlay for badge readability */}
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'linear-gradient(to top, rgba(10, 13, 20, 0.9) 0%, transparent 60%, rgba(0, 0, 0, 0.4) 100%)',
+          zIndex: 2,
+          pointerEvents: 'none'
         }} />
         
         {/* Status Badge */}
-        <div style={{ position: 'absolute', top: '12px', left: '12px', zIndex: 2 }}>
+        <div style={{ position: 'absolute', top: '12px', left: '12px', zIndex: 3 }}>
           <span className={`badge ${getBadgeClass(status)}`}>
             {status}
           </span>
         </div>
 
         {/* Format Badge */}
-        <div style={{ position: 'absolute', top: '12px', right: '12px', zIndex: 2 }}>
+        <div style={{ position: 'absolute', top: '12px', right: '12px', zIndex: 3 }}>
           <span style={{
-            background: 'rgba(0, 0, 0, 0.65)',
+            background: 'rgba(0, 0, 0, 0.75)',
             color: 'var(--cyan)',
-            border: '1px solid rgba(0, 243, 255, 0.3)',
+            border: '1px solid rgba(0, 243, 255, 0.4)',
             padding: '0.2rem 0.6rem',
             borderRadius: '4px',
             fontSize: '0.75rem',
             fontFamily: 'var(--font-heading)',
-            fontWeight: 700
+            fontWeight: 700,
+            boxShadow: '0 0 10px rgba(0,0,0,0.5)'
           }}>
             {format || 'Squad'} ({game_mode})
           </span>

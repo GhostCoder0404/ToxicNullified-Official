@@ -312,17 +312,31 @@ export default function TournamentDetail() {
               background: '#06080c'
             }}
           >
+            {/* Blurred backdrop background */}
+            <div style={{
+              position: 'absolute',
+              inset: 0,
+              backgroundImage: `url(${officialPoster})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              filter: 'blur(16px) brightness(0.35)',
+              transform: 'scale(1.15)'
+            }} />
+
+            {/* Crisp foreground poster fitting 100% perfectly without cropping */}
             <img
               src={officialPoster}
               alt={`${title} Official Poster`}
               style={{
+                position: 'relative',
+                zIndex: 1,
                 width: '100%',
                 height: '100%',
-                objectFit: 'cover',
+                objectFit: 'contain',
                 display: 'block',
                 transition: 'transform 0.4s ease'
               }}
-              onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.04)'}
+              onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.03)'}
               onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
             />
 

@@ -921,7 +921,7 @@ export default function AdminDashboard() {
                     <img
                       src={tourneyForm.poster_url}
                       alt="Poster Preview"
-                      style={{ width: '80px', height: '110px', objectFit: 'cover', borderRadius: '6px', border: '1px solid var(--cyan)' }}
+                      style={{ width: '90px', height: '110px', objectFit: 'contain', background: '#000', borderRadius: '6px', border: '1px solid var(--cyan)' }}
                       onError={(e) => e.target.style.display = 'none'}
                     />
                     <div>
@@ -975,7 +975,7 @@ export default function AdminDashboard() {
                     <img
                       src={tourneyForm.banner_url}
                       alt="Banner Preview"
-                      style={{ width: '160px', height: '65px', objectFit: 'cover', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.2)' }}
+                      style={{ width: '180px', height: '80px', objectFit: 'contain', background: '#000', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.2)' }}
                       onError={(e) => e.target.style.display = 'none'}
                     />
                     <div>
