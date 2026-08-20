@@ -67,14 +67,24 @@ const initSchema = async () => {
       max_teams INTEGER DEFAULT 64,
       registered_teams INTEGER DEFAULT 0,
       start_date TEXT NOT NULL,
+      reg_end_date TEXT,
+      map_rotation TEXT DEFAULT 'Erangel, Rondo & Miramar',
+      organizer TEXT DEFAULT 'ToxicNullified Official',
       status TEXT DEFAULT 'Upcoming',
       banner_url TEXT,
+      poster_url TEXT,
       rules TEXT,
       schedule TEXT,
       prize_breakdown TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
+
+  // Safely alter table to add any missing new columns for existing databases
+  try { await run(`ALTER TABLE tournaments ADD COLUMN reg_end_date TEXT`); } catch (e) {}
+  try { await run(`ALTER TABLE tournaments ADD COLUMN map_rotation TEXT DEFAULT 'Erangel, Rondo & Miramar'`); } catch (e) {}
+  try { await run(`ALTER TABLE tournaments ADD COLUMN organizer TEXT DEFAULT 'ToxicNullified Official'`); } catch (e) {}
+  try { await run(`ALTER TABLE tournaments ADD COLUMN poster_url TEXT`); } catch (e) {}
 
   await run(`
     CREATE TABLE IF NOT EXISTS registrations (

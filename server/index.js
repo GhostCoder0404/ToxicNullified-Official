@@ -159,7 +159,8 @@ app.post('/api/tournaments', verifyToken, async (req, res) => {
   try {
     const {
       title, game_mode, format, prize_pool, entry_fee, max_teams,
-      start_date, status, banner_url, rules, schedule, prize_breakdown
+      start_date, reg_end_date, map_rotation, organizer, status,
+      banner_url, poster_url, rules, schedule, prize_breakdown
     } = req.body;
 
     if (!title || !prize_pool || !start_date) {
@@ -167,8 +168,11 @@ app.post('/api/tournaments', verifyToken, async (req, res) => {
     }
 
     const result = await run(
-      `INSERT INTO tournaments (title, game_mode, format, prize_pool, entry_fee, max_teams, start_date, status, banner_url, rules, schedule, prize_breakdown)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO tournaments (
+        title, game_mode, format, prize_pool, entry_fee, max_teams,
+        start_date, reg_end_date, map_rotation, organizer, status,
+        banner_url, poster_url, rules, schedule, prize_breakdown
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         title,
         game_mode || 'Squad TPP',
@@ -177,8 +181,12 @@ app.post('/api/tournaments', verifyToken, async (req, res) => {
         Number(entry_fee) || 0,
         Number(max_teams) || 64,
         start_date,
+        reg_end_date || null,
+        map_rotation || 'Erangel, Rondo & Miramar',
+        organizer || 'ToxicNullified Official',
         status || 'Registration Open',
         banner_url || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80',
+        poster_url || banner_url || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=800&q=80',
         JSON.stringify(rules || []),
         JSON.stringify(schedule || []),
         JSON.stringify(prize_breakdown || [])
@@ -197,18 +205,23 @@ app.put('/api/tournaments/:id', verifyToken, async (req, res) => {
     const tId = req.params.id;
     const {
       title, game_mode, format, prize_pool, entry_fee, max_teams,
-      start_date, status, banner_url, rules, schedule, prize_breakdown
+      start_date, reg_end_date, map_rotation, organizer, status,
+      banner_url, poster_url, rules, schedule, prize_breakdown
     } = req.body;
 
     await run(
       `UPDATE tournaments SET
         title = ?, game_mode = ?, format = ?, prize_pool = ?, entry_fee = ?,
-        max_teams = ?, start_date = ?, status = ?, banner_url = ?,
+        max_teams = ?, start_date = ?, reg_end_date = ?, map_rotation = ?,
+        organizer = ?, status = ?, banner_url = ?, poster_url = ?,
         rules = ?, schedule = ?, prize_breakdown = ?
        WHERE id = ?`,
       [
         title, game_mode, format, Number(prize_pool), Number(entry_fee),
-        Number(max_teams), start_date, status, banner_url,
+        Number(max_teams), start_date, reg_end_date || null,
+        map_rotation || 'Erangel, Rondo & Miramar',
+        organizer || 'ToxicNullified Official', status, banner_url,
+        poster_url || banner_url || '',
         JSON.stringify(rules || []), JSON.stringify(schedule || []), JSON.stringify(prize_breakdown || []),
         tId
       ]

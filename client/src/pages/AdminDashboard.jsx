@@ -146,12 +146,22 @@ export default function AdminDashboard() {
   const openCreateTourneyModal = () => {
     setEditingTourney(null);
     setTourneyForm({
-      title: '', game_mode: 'Squad TPP', format: 'Squad', prize_pool: 15000, entry_fee: 100, max_teams: 64,
-      start_date: new Date().toISOString().slice(0, 16), status: 'Registration Open',
+      title: '',
+      game_mode: 'Squad TPP',
+      format: 'Squad',
+      prize_pool: 15000,
+      entry_fee: 100,
+      max_teams: 64,
+      start_date: new Date().toISOString().slice(0, 16),
+      reg_end_date: new Date(Date.now() + 86400000 * 5).toISOString().slice(0, 16),
+      map_rotation: 'Erangel, Rondo & Miramar',
+      organizer: 'ToxicNullified Official',
+      status: 'Registration Open',
       banner_url: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80',
+      poster_url: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=800&q=80',
       rules_text: 'Mobile devices only.\nNo emulators allowed.\nRecord clean POV video.',
       schedule_text: 'Day 1: Erangel & Miramar\nDay 2: Grand Finals 4 Matches',
-      prize_breakdown_text: '1st: ₹ 8,000\n2nd: ₹ 4,000\n3rd: ₹ 3,000'
+      prize_breakdown_text: '1st Place: ₹ 8,000\n2nd Place: ₹ 4,000\n3rd Place: ₹ 3,000'
     });
     setShowTourneyModal(true);
   };
@@ -159,15 +169,19 @@ export default function AdminDashboard() {
   const openEditTourneyModal = (t) => {
     setEditingTourney(t);
     setTourneyForm({
-      title: t.title,
-      game_mode: t.game_mode,
-      format: t.format,
-      prize_pool: t.prize_pool,
-      entry_fee: t.entry_fee,
-      max_teams: t.max_teams,
+      title: t.title || '',
+      game_mode: t.game_mode || 'Squad TPP',
+      format: t.format || 'Squad',
+      prize_pool: t.prize_pool || 0,
+      entry_fee: t.entry_fee || 0,
+      max_teams: t.max_teams || 64,
       start_date: t.start_date ? t.start_date.slice(0, 16) : '',
-      status: t.status,
+      reg_end_date: t.reg_end_date ? t.reg_end_date.slice(0, 16) : '',
+      map_rotation: t.map_rotation || 'Erangel, Rondo & Miramar',
+      organizer: t.organizer || 'ToxicNullified Official',
+      status: t.status || 'Registration Open',
       banner_url: t.banner_url || '',
+      poster_url: t.poster_url || t.banner_url || '',
       rules_text: Array.isArray(t.rules) ? t.rules.join('\n') : '',
       schedule_text: Array.isArray(t.schedule) ? t.schedule.map(s => `${s.day}: ${s.matches}`).join('\n') : '',
       prize_breakdown_text: Array.isArray(t.prize_breakdown) ? t.prize_breakdown.map(p => `${p.rank}: ${p.amount}`).join('\n') : ''
@@ -195,8 +209,12 @@ export default function AdminDashboard() {
       entry_fee: Number(tourneyForm.entry_fee),
       max_teams: Number(tourneyForm.max_teams),
       start_date: tourneyForm.start_date,
+      reg_end_date: tourneyForm.reg_end_date,
+      map_rotation: tourneyForm.map_rotation,
+      organizer: tourneyForm.organizer,
       status: tourneyForm.status,
       banner_url: tourneyForm.banner_url,
+      poster_url: tourneyForm.poster_url,
       rules,
       schedule,
       prize_breakdown
@@ -807,9 +825,36 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
+              <div className="admin-form-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem' }}>
+                <div className="form-group">
+                  <label className="form-label">Match Start Date & Time</label>
+                  <input type="datetime-local" value={tourneyForm.start_date} onChange={e => setTourneyForm({ ...tourneyForm, start_date: e.target.value })} className="form-input" required />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Registration Deadline</label>
+                  <input type="datetime-local" value={tourneyForm.reg_end_date} onChange={e => setTourneyForm({ ...tourneyForm, reg_end_date: e.target.value })} className="form-input" />
+                </div>
+              </div>
+
+              <div className="admin-form-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem' }}>
+                <div className="form-group">
+                  <label className="form-label">Organizer / Host Name</label>
+                  <input type="text" value={tourneyForm.organizer} onChange={e => setTourneyForm({ ...tourneyForm, organizer: e.target.value })} className="form-input" placeholder="ToxicNullified Official" />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Map Rotation</label>
+                  <input type="text" value={tourneyForm.map_rotation} onChange={e => setTourneyForm({ ...tourneyForm, map_rotation: e.target.value })} className="form-input" placeholder="Erangel, Rondo & Miramar" />
+                </div>
+              </div>
+
               <div className="form-group">
-                <label className="form-label">Start Date & Time</label>
-                <input type="datetime-local" value={tourneyForm.start_date} onChange={e => setTourneyForm({ ...tourneyForm, start_date: e.target.value })} className="form-input" required />
+                <label className="form-label">Official Poster Image URL (Portrait Image on Right)</label>
+                <input type="url" value={tourneyForm.poster_url} onChange={e => setTourneyForm({ ...tourneyForm, poster_url: e.target.value })} className="form-input" placeholder="https://..." />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Cover Banner Image URL (Horizontal Image)</label>
+                <input type="url" value={tourneyForm.banner_url} onChange={e => setTourneyForm({ ...tourneyForm, banner_url: e.target.value })} className="form-input" placeholder="https://..." />
               </div>
 
               <div className="form-group">
@@ -828,7 +873,7 @@ export default function AdminDashboard() {
               </div>
 
               <button type="submit" className="btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '0.8rem' }}>
-                Save Tournament Details
+                Save & Publish Tournament
               </button>
             </form>
           </div>
