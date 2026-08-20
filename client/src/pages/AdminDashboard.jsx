@@ -70,13 +70,27 @@ export default function AdminDashboard() {
     setLoading(true);
     try {
       const statsRes = await fetchAdminStats(token);
-      if (statsRes.success) setStats(statsRes.stats);
-
       const tourneyRes = await fetchTournaments({ status: 'All' });
-      if (tourneyRes.success) setTournaments(tourneyRes.tournaments);
-
       const regRes = await fetchRegistrations(token, { status: regStatusFilter, tournament_id: selectedTourneyId });
-      if (regRes.success) setRegistrations(regRes.registrations);
+
+      const tourneysList = tourneyRes.success ? tourneyRes.tournaments : [];
+      const regsList = regRes.success ? regRes.registrations : [];
+
+      setTournaments(tourneysList);
+      setRegistrations(regsList);
+
+      const activeCount = tourneysList.filter(t => t.status === 'Registration Open' || t.status === 'Ongoing').length;
+      const pendingCount = regsList.filter(r => (r.status || '').toLowerCase() === 'pending').length;
+      const approvedCount = regsList.filter(r => (r.status || '').toLowerCase() === 'approved').length;
+
+      setStats({
+        totalTournaments: tourneysList.length || (statsRes.success ? statsRes.stats.totalTournaments : 0),
+        activeTournaments: activeCount || (statsRes.success ? statsRes.stats.activeTournaments : 0),
+        totalRegistrations: regsList.length || (statsRes.success ? statsRes.stats.totalRegistrations : 0),
+        pendingRegistrations: pendingCount || (statsRes.success ? statsRes.stats.pendingRegistrations : 0),
+        approvedRegistrations: approvedCount || (statsRes.success ? statsRes.stats.approvedRegistrations : 0),
+        totalRevenue: (statsRes.success && statsRes.stats.totalRevenue) || 0
+      });
     } catch (err) {
       console.error('Admin load dashboard error:', err);
     } finally {
@@ -191,13 +205,16 @@ export default function AdminDashboard() {
     try {
       if (editingTourney) {
         await updateTournament(editingTourney.id, payload, token);
+        showToast('Tournament updated and saved to cloud database!', 'success');
       } else {
         await createTournament(payload, token);
+        showToast('Tournament created and saved permanently to cloud database!', 'success');
       }
       setShowTourneyModal(false);
       loadDashboardData();
     } catch (err) {
       console.error('Save tournament error:', err);
+      showToast('Failed to save tournament. Please try again.', 'error');
     }
   };
 
@@ -206,6 +223,7 @@ export default function AdminDashboard() {
     try {
       const res = await deleteTournament(tId, token);
       if (res.success) {
+        showToast('Tournament deleted successfully.', 'success');
         await loadDashboardData();
       } else {
         alert('Failed to delete tournament: ' + (res.message || 'Unknown error'));
