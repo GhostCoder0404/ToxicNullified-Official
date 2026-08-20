@@ -76,6 +76,8 @@ const initSchema = async () => {
       rules TEXT,
       schedule TEXT,
       prize_breakdown TEXT,
+      rounds_format TEXT,
+      groups_data TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
@@ -85,6 +87,8 @@ const initSchema = async () => {
   try { await run(`ALTER TABLE tournaments ADD COLUMN map_rotation TEXT DEFAULT 'Erangel, Rondo & Miramar'`); } catch (e) {}
   try { await run(`ALTER TABLE tournaments ADD COLUMN organizer TEXT DEFAULT 'ToxicNullified Official'`); } catch (e) {}
   try { await run(`ALTER TABLE tournaments ADD COLUMN poster_url TEXT`); } catch (e) {}
+  try { await run(`ALTER TABLE tournaments ADD COLUMN rounds_format TEXT`); } catch (e) {}
+  try { await run(`ALTER TABLE tournaments ADD COLUMN groups_data TEXT`); } catch (e) {}
 
   await run(`
     CREATE TABLE IF NOT EXISTS registrations (
@@ -108,11 +112,14 @@ const initSchema = async () => {
       payment_ref TEXT NOT NULL,
       payment_screenshot TEXT,
       logo_url TEXT,
+      group_name TEXT,
       status TEXT DEFAULT 'Pending',
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY(tournament_id) REFERENCES tournaments(id)
     )
   `);
+
+  try { await run(`ALTER TABLE registrations ADD COLUMN group_name TEXT`); } catch (e) {}
 
   await run(`
     CREATE TABLE IF NOT EXISTS standings (

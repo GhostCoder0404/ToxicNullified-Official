@@ -161,6 +161,8 @@ app.get('/api/tournaments/:id', async (req, res) => {
         rules: tournament.rules ? JSON.parse(tournament.rules) : [],
         schedule: tournament.schedule ? JSON.parse(tournament.schedule) : [],
         prize_breakdown: tournament.prize_breakdown ? JSON.parse(tournament.prize_breakdown) : [],
+        rounds_format: tournament.rounds_format ? JSON.parse(tournament.rounds_format) : [],
+        groups_data: tournament.groups_data ? JSON.parse(tournament.groups_data) : [],
         registered_teams: registrationCount ? registrationCount.count : 0
       },
       standings
@@ -176,7 +178,8 @@ app.post('/api/tournaments', verifyToken, async (req, res) => {
     const {
       title, game_mode, format, prize_pool, entry_fee, max_teams,
       start_date, reg_end_date, map_rotation, organizer, status,
-      banner_url, poster_url, rules, schedule, prize_breakdown
+      banner_url, poster_url, rules, schedule, prize_breakdown,
+      rounds_format, groups_data
     } = req.body;
 
     if (!title || !prize_pool || !start_date) {
@@ -187,8 +190,9 @@ app.post('/api/tournaments', verifyToken, async (req, res) => {
       `INSERT INTO tournaments (
         title, game_mode, format, prize_pool, entry_fee, max_teams,
         start_date, reg_end_date, map_rotation, organizer, status,
-        banner_url, poster_url, rules, schedule, prize_breakdown
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        banner_url, poster_url, rules, schedule, prize_breakdown,
+        rounds_format, groups_data
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         title,
         game_mode || 'Squad TPP',
@@ -205,7 +209,9 @@ app.post('/api/tournaments', verifyToken, async (req, res) => {
         poster_url || banner_url || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=800&q=80',
         JSON.stringify(rules || []),
         JSON.stringify(schedule || []),
-        JSON.stringify(prize_breakdown || [])
+        JSON.stringify(prize_breakdown || []),
+        JSON.stringify(rounds_format || []),
+        JSON.stringify(groups_data || [])
       ]
     );
 
@@ -222,7 +228,8 @@ app.put('/api/tournaments/:id', verifyToken, async (req, res) => {
     const {
       title, game_mode, format, prize_pool, entry_fee, max_teams,
       start_date, reg_end_date, map_rotation, organizer, status,
-      banner_url, poster_url, rules, schedule, prize_breakdown
+      banner_url, poster_url, rules, schedule, prize_breakdown,
+      rounds_format, groups_data
     } = req.body;
 
     await run(
@@ -230,7 +237,8 @@ app.put('/api/tournaments/:id', verifyToken, async (req, res) => {
         title = ?, game_mode = ?, format = ?, prize_pool = ?, entry_fee = ?,
         max_teams = ?, start_date = ?, reg_end_date = ?, map_rotation = ?,
         organizer = ?, status = ?, banner_url = ?, poster_url = ?,
-        rules = ?, schedule = ?, prize_breakdown = ?
+        rules = ?, schedule = ?, prize_breakdown = ?,
+        rounds_format = ?, groups_data = ?
        WHERE id = ?`,
       [
         title, game_mode, format, Number(prize_pool), Number(entry_fee),
@@ -238,7 +246,11 @@ app.put('/api/tournaments/:id', verifyToken, async (req, res) => {
         map_rotation || 'Erangel, Rondo & Miramar',
         organizer || 'ToxicNullified Official', status, banner_url,
         poster_url || banner_url || '',
-        JSON.stringify(rules || []), JSON.stringify(schedule || []), JSON.stringify(prize_breakdown || []),
+        JSON.stringify(rules || []),
+        JSON.stringify(schedule || []),
+        JSON.stringify(prize_breakdown || []),
+        JSON.stringify(rounds_format || []),
+        JSON.stringify(groups_data || []),
         tId
       ]
     );

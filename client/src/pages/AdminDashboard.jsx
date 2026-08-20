@@ -179,6 +179,61 @@ export default function AdminDashboard() {
     }
   };
 
+  const defaultRounds = [
+    {
+      id: 1,
+      name: 'Qualifiers Round 1',
+      dates: '6th - 9th May 2026',
+      status: 'Upcoming',
+      description: 'All registered teams divided into groups. Top 12 teams per group advance to Round 2.',
+      map_schedule: 'Erangel & Miramar',
+      qualifying_slots: 'Top 12 Teams Advance'
+    },
+    {
+      id: 2,
+      name: 'Qualifiers Round 2',
+      dates: '11th - 14th May 2026',
+      status: 'Upcoming',
+      description: '32 Teams competing in 4 matches. Top 8 teams advance directly to Semi Finals.',
+      map_schedule: 'Erangel, Rondo & Miramar',
+      qualifying_slots: 'Top 8 to Semi Finals'
+    },
+    {
+      id: 3,
+      name: 'Survival Stage',
+      dates: '2nd - 5th June 2026',
+      status: 'Upcoming',
+      description: 'Remaining teams battle in wild-card matches for final qualifier slots.',
+      map_schedule: 'Erangel & Miramar',
+      qualifying_slots: 'Top 4 Wildcard Slots'
+    },
+    {
+      id: 4,
+      name: 'Semi Finals',
+      dates: '9th - 12th June 2026',
+      status: 'Upcoming',
+      description: 'Top 24 Teams divided into 3 groups (A vs B, B vs C, A vs C).',
+      map_schedule: 'Erangel, Rondo & Miramar',
+      qualifying_slots: 'Top 16 to Grand Finals'
+    },
+    {
+      id: 5,
+      name: 'Grand Finals',
+      dates: '19th - 21st June 2026',
+      status: 'Upcoming',
+      description: 'Final 16 Teams compete over 3 Days for the ₹ 15,000 Prize Pool.',
+      map_schedule: 'All Maps (6 Matches / Day)',
+      qualifying_slots: 'Champion Title & Trophy'
+    }
+  ];
+
+  // Group Management State
+  const [showGroupModal, setShowGroupModal] = useState(false);
+  const [selectedTourneyForGroups, setSelectedTourneyForGroups] = useState(null);
+  const [numGroupsToCreate, setNumGroupsToCreate] = useState(4);
+  const [groupState, setGroupState] = useState([]);
+  const [savingGroups, setSavingGroups] = useState(false);
+
   const openCreateTourneyModal = () => {
     setEditingTourney(null);
     setTourneyForm({
@@ -197,7 +252,8 @@ export default function AdminDashboard() {
       poster_url: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=800&q=80',
       rules_text: 'Mobile devices only.\nNo emulators allowed.\nRecord clean POV video.',
       schedule_text: 'Day 1: Erangel & Miramar\nDay 2: Grand Finals 4 Matches',
-      prize_breakdown_text: '1st Place: ₹ 8,000\n2nd Place: ₹ 4,000\n3rd Place: ₹ 3,000'
+      prize_breakdown_text: '1st Place: ₹ 8,000\n2nd Place: ₹ 4,000\n3rd Place: ₹ 3,000',
+      rounds_format: defaultRounds
     });
     setShowTourneyModal(true);
   };
@@ -220,9 +276,122 @@ export default function AdminDashboard() {
       poster_url: t.poster_url || t.banner_url || '',
       rules_text: Array.isArray(t.rules) ? t.rules.join('\n') : '',
       schedule_text: Array.isArray(t.schedule) ? t.schedule.map(s => `${s.day}: ${s.matches}`).join('\n') : '',
-      prize_breakdown_text: Array.isArray(t.prize_breakdown) ? t.prize_breakdown.map(p => `${p.rank}: ${p.amount}`).join('\n') : ''
+      prize_breakdown_text: Array.isArray(t.prize_breakdown) ? t.prize_breakdown.map(p => `${p.rank}: ${p.amount}`).join('\n') : '',
+      rounds_format: Array.isArray(t.rounds_format) && t.rounds_format.length > 0 ? t.rounds_format : defaultRounds
     });
     setShowTourneyModal(true);
+  };
+
+  const handleAddRound = () => {
+    setTourneyForm(prev => ({
+      ...prev,
+      rounds_format: [
+        ...(prev.rounds_format || []),
+        {
+          id: Date.now(),
+          name: `Round ${ (prev.rounds_format || []).length + 1 }`,
+          dates: 'TBA',
+          status: 'Upcoming',
+          description: 'Stage details and qualification rules.',
+          map_schedule: 'Erangel & Miramar',
+          qualifying_slots: 'Top Teams Advance'
+        }
+      ]
+    }));
+  };
+
+  const handleUpdateRound = (index, field, value) => {
+    setTourneyForm(prev => {
+      const updated = [...(prev.rounds_format || [])];
+      updated[index] = { ...updated[index], [field]: value };
+      return { ...prev, rounds_format: updated };
+    });
+  };
+
+  const handleRemoveRound = (index) => {
+    setTourneyForm(prev => ({
+      ...prev,
+      rounds_format: (prev.rounds_format || []).filter((_, i) => i !== index)
+    }));
+  };
+
+  const openGroupManagerModal = (t) => {
+    setSelectedTourneyForGroups(t);
+    let existingGroups = Array.isArray(t.groups_data) ? t.groups_data : [];
+    if (existingGroups.length === 0) {
+      existingGroups = [
+        { name: 'Group A', teams: [] },
+        { name: 'Group B', teams: [] },
+        { name: 'Group C', teams: [] },
+        { name: 'Group D', teams: [] }
+      ];
+    }
+    setGroupState(existingGroups);
+    setShowGroupModal(true);
+  };
+
+  const handleAutoDivideTeams = () => {
+    if (!selectedTourneyForGroups) return;
+    
+    // Get all approved registrations for this tournament
+    const approvedTeams = registrations.filter(
+      r => String(r.tournament_id) === String(selectedTourneyForGroups.id) && r.status === 'Approved'
+    );
+
+    if (approvedTeams.length === 0) {
+      showToast('No approved registered teams found for this tournament!', 'warning');
+      return;
+    }
+
+    const groupLetters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+    const newGroups = [];
+    for (let i = 0; i < numGroupsToCreate; i++) {
+      const letter = groupLetters[i] || `Group ${i + 1}`;
+      newGroups.push({ name: `Group ${letter}`, teams: [] });
+    }
+
+    approvedTeams.forEach((team, idx) => {
+      const targetGroupIdx = idx % numGroupsToCreate;
+      newGroups[targetGroupIdx].teams.push({
+        id: team.id,
+        team_name: team.team_name,
+        team_tag: team.team_tag || team.team_name.substring(0, 4).toUpperCase(),
+        logo_url: team.logo_url || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=150&q=80',
+        captain_name: team.captain_name
+      });
+    });
+
+    setGroupState(newGroups);
+    showToast(`Divided ${approvedTeams.length} approved teams into ${numGroupsToCreate} groups with logos!`, 'success');
+  };
+
+  const handleAddCustomGroup = () => {
+    const nextLetter = String.fromCharCode(65 + groupState.length);
+    setGroupState(prev => [...prev, { name: `Group ${nextLetter}`, teams: [] }]);
+  };
+
+  const handleRemoveGroup = (idx) => {
+    setGroupState(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleSaveGroups = async () => {
+    if (!selectedTourneyForGroups) return;
+    setSavingGroups(true);
+    try {
+      const payload = {
+        ...selectedTourneyForGroups,
+        groups_data: groupState
+      };
+      await updateTournament(selectedTourneyForGroups.id, payload, token);
+      showToast('Group divisions saved and updated live on website!', 'success');
+      setShowGroupModal(false);
+      loadDashboardData();
+    } catch (err) {
+      console.error('Save groups error:', err);
+      showToast('Failed to save group allocations.', 'error');
+    } finally {
+      setSavingGroups(false);
+    }
   };
 
   const handleSaveTourney = async (e) => {
@@ -253,7 +422,9 @@ export default function AdminDashboard() {
       poster_url: tourneyForm.poster_url,
       rules,
       schedule,
-      prize_breakdown
+      prize_breakdown,
+      rounds_format: tourneyForm.rounds_format || [],
+      groups_data: editingTourney?.groups_data || []
     };
 
     try {
@@ -657,6 +828,14 @@ export default function AdminDashboard() {
                     <td style={{ padding: '0.8rem', textAlign: 'center' }}>
                       <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'center' }}>
                         <button
+                          onClick={() => openGroupManagerModal(t)}
+                          className="btn-secondary"
+                          style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', borderColor: 'var(--purple)', color: '#c084fc' }}
+                          title="Divide Approved Teams into Groups"
+                        >
+                          <Users size={14} /> Groups
+                        </button>
+                        <button
                           onClick={() => openEditTourneyModal(t)}
                           className="btn-secondary"
                           style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem' }}
@@ -992,6 +1171,130 @@ export default function AdminDashboard() {
                 )}
               </div>
 
+              {/* DYNAMIC STAGE / ROUND FORMAT BUILDER */}
+              <div className="form-group" style={{ background: 'rgba(255, 183, 0, 0.03)', padding: '1.2rem', borderRadius: '10px', border: '1px solid rgba(255, 183, 0, 0.25)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
+                  <div>
+                    <label className="form-label" style={{ color: 'var(--gold)', fontWeight: 700, margin: 0, fontSize: '1rem' }}>
+                      🏆 Interactive Stage & Format Roadmap Builder
+                    </label>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>
+                      Add or edit tournament stages (Qualifiers, Survival, Semi Finals, Grand Finals) that users can expand to view details on the website.
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleAddRound}
+                    className="btn-secondary"
+                    style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', borderColor: 'var(--gold)', color: 'var(--gold)' }}
+                  >
+                    <Plus size={14} /> Add Stage Round
+                  </button>
+                </div>
+
+                {(tourneyForm.rounds_format || []).map((round, idx) => (
+                  <div
+                    key={round.id || idx}
+                    style={{
+                      background: 'rgba(10, 13, 20, 0.8)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      borderRadius: '8px',
+                      padding: '0.9rem',
+                      marginBottom: '0.8rem'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
+                      <span style={{ color: 'var(--cyan)', fontWeight: 700, fontSize: '0.85rem' }}>
+                        Round {idx + 1}: {round.name}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveRound(idx)}
+                        style={{ background: 'none', border: 'none', color: 'var(--crimson)', cursor: 'pointer', padding: 0 }}
+                        title="Delete Stage Round"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.6rem', marginBottom: '0.6rem' }}>
+                      <div>
+                        <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Stage Name</label>
+                        <input
+                          type="text"
+                          value={round.name}
+                          onChange={e => handleUpdateRound(idx, 'name', e.target.value)}
+                          className="form-input"
+                          style={{ padding: '0.4rem', fontSize: '0.85rem' }}
+                          placeholder="e.g. Qualifiers Round 1"
+                        />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Date Range</label>
+                        <input
+                          type="text"
+                          value={round.dates}
+                          onChange={e => handleUpdateRound(idx, 'dates', e.target.value)}
+                          className="form-input"
+                          style={{ padding: '0.4rem', fontSize: '0.85rem' }}
+                          placeholder="e.g. 6th - 9th May 2026"
+                        />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Status</label>
+                        <select
+                          value={round.status || 'Upcoming'}
+                          onChange={e => handleUpdateRound(idx, 'status', e.target.value)}
+                          className="form-select"
+                          style={{ padding: '0.4rem', fontSize: '0.85rem' }}
+                        >
+                          <option value="Upcoming">Upcoming</option>
+                          <option value="Ongoing">Ongoing</option>
+                          <option value="Completed">Completed</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem', marginBottom: '0.6rem' }}>
+                      <div>
+                        <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Map Schedule</label>
+                        <input
+                          type="text"
+                          value={round.map_schedule}
+                          onChange={e => handleUpdateRound(idx, 'map_schedule', e.target.value)}
+                          className="form-input"
+                          style={{ padding: '0.4rem', fontSize: '0.85rem' }}
+                          placeholder="e.g. Erangel, Rondo & Miramar"
+                        />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Qualification Slots Rule</label>
+                        <input
+                          type="text"
+                          value={round.qualifying_slots}
+                          onChange={e => handleUpdateRound(idx, 'qualifying_slots', e.target.value)}
+                          className="form-input"
+                          style={{ padding: '0.4rem', fontSize: '0.85rem' }}
+                          placeholder="e.g. Top 12 Advance to Round 2"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Stage Details & Description</label>
+                      <input
+                        type="text"
+                        value={round.description}
+                        onChange={e => handleUpdateRound(idx, 'description', e.target.value)}
+                        className="form-input"
+                        style={{ padding: '0.4rem', fontSize: '0.85rem' }}
+                        placeholder="Detail rules, group matchups or match format for this round..."
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
               <div className="form-group">
                 <label className="form-label">Rules (One per line)</label>
                 <textarea rows={3} value={tourneyForm.rules_text} onChange={e => setTourneyForm({ ...tourneyForm, rules_text: e.target.value })} className="form-textarea" />
@@ -1011,6 +1314,169 @@ export default function AdminDashboard() {
                 Save & Publish Tournament
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ------------------------------------------------------------- */}
+      {/* MODAL: MANAGE TEAM GROUPS */}
+      {/* ------------------------------------------------------------- */}
+      {showGroupModal && selectedTourneyForGroups && (
+        <div className="modal-overlay">
+          <div className="modal-content glass-card" style={{ maxWidth: '800px', width: '90%', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <div>
+                <h3 style={{ color: '#c084fc', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Users size={22} /> Manage Team Groups & Divisions
+                </h3>
+                <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                  Tournament: {selectedTourneyForGroups.title}
+                </span>
+              </div>
+              <button onClick={() => setShowGroupModal(false)} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer' }}><X size={20} /></button>
+            </div>
+
+            {/* Auto Divide Tools */}
+            <div style={{ background: 'rgba(192, 132, 252, 0.05)', border: '1px solid rgba(192, 132, 252, 0.25)', padding: '1rem', borderRadius: '10px', marginBottom: '1.5rem' }}>
+              <h4 style={{ color: '#c084fc', margin: '0 0 0.5rem 0', fontSize: '0.95rem' }}>⚡ One-Click Auto Team Allocator</h4>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '0 0 0.8rem 0' }}>
+                Automatically distributes all <strong>Approved</strong> registered teams for this tournament into balanced groups with uploaded logos intact.
+              </p>
+
+              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                <div>
+                  <label style={{ fontSize: '0.75rem', color: '#fff', marginRight: '0.5rem' }}>Number of Groups:</label>
+                  <select
+                    value={numGroupsToCreate}
+                    onChange={e => setNumGroupsToCreate(Number(e.target.value))}
+                    className="form-select"
+                    style={{ padding: '0.4rem 0.8rem', width: 'auto', display: 'inline-block' }}
+                  >
+                    <option value={2}>2 Groups (Group A, B)</option>
+                    <option value={4}>4 Groups (Group A, B, C, D)</option>
+                    <option value={8}>8 Groups (Group A to H)</option>
+                  </select>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleAutoDivideTeams}
+                  className="btn-primary"
+                  style={{ background: 'linear-gradient(135deg, #a855f7, #6366f1)', padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+                >
+                  ⚡ Auto Divide Approved Teams
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleAddCustomGroup}
+                  className="btn-secondary"
+                  style={{ padding: '0.5rem 0.8rem', fontSize: '0.85rem' }}
+                >
+                  <Plus size={14} /> Add Custom Group
+                </button>
+              </div>
+            </div>
+
+            {/* Groups Roster View */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem', marginBottom: '1.5rem' }}>
+              {groupState.map((group, gIdx) => (
+                <div
+                  key={gIdx}
+                  style={{
+                    background: 'rgba(10, 13, 20, 0.7)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: '10px',
+                    padding: '1rem'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                      <span style={{
+                        background: 'rgba(192, 132, 252, 0.2)',
+                        color: '#c084fc',
+                        border: '1px solid rgba(192, 132, 252, 0.4)',
+                        padding: '0.3rem 0.8rem',
+                        borderRadius: '6px',
+                        fontWeight: 800,
+                        fontSize: '0.9rem'
+                      }}>
+                        {group.name}
+                      </span>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                        ({group.teams.length} Teams Assigned)
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveGroup(gIdx)}
+                      style={{ background: 'none', border: 'none', color: 'var(--crimson)', cursor: 'pointer', fontSize: '0.8rem' }}
+                    >
+                      Remove Group
+                    </button>
+                  </div>
+
+                  {/* Teams List Grid */}
+                  {group.teams.length > 0 ? (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '0.6rem' }}>
+                      {group.teams.map((t, tIdx) => (
+                        <div
+                          key={tIdx}
+                          style={{
+                            background: 'rgba(255, 255, 255, 0.03)',
+                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                            borderRadius: '8px',
+                            padding: '0.6rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.6rem'
+                          }}
+                        >
+                          <img
+                            src={t.logo_url || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=150&q=80'}
+                            alt={t.team_name}
+                            style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--cyan)' }}
+                            onError={(e) => e.target.src = 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=150&q=80'}
+                          />
+                          <div style={{ overflow: 'hidden' }}>
+                            <span style={{ color: '#fff', fontWeight: 700, fontSize: '0.8rem', display: 'block', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                              [{t.team_tag}] {t.team_name}
+                            </span>
+                            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block' }}>
+                              Capt: {t.captain_name}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                      No teams assigned to {group.name} yet. Click Auto Divide to allocate teams.
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                onClick={() => setShowGroupModal(false)}
+                className="btn-secondary"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveGroups}
+                disabled={savingGroups}
+                className="btn-primary"
+                style={{ background: 'linear-gradient(135deg, #00f3ff, #00ff88)' }}
+              >
+                {savingGroups ? 'Saving Groups...' : 'Save & Publish Groups to Website'}
+              </button>
+            </div>
           </div>
         </div>
       )}

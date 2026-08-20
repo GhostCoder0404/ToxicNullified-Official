@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
-  Trophy, Calendar, Users, Shield, Flame, CheckCircle, ChevronDown, Clock,
-  Award, FileText, ListOrdered, ArrowLeft, Maximize2, X, MapPin, Gamepad2, AlertCircle
+  Trophy, Calendar, Users, Shield, Flame, CheckCircle, ChevronDown, ChevronUp, Clock,
+  Award, FileText, ListOrdered, ArrowLeft, Maximize2, X, MapPin, Gamepad2, AlertCircle, Grid, Layers
 } from 'lucide-react';
 import PointsTable from '../components/PointsTable';
 import RegistrationModal from '../components/RegistrationModal';
@@ -14,8 +14,12 @@ export default function TournamentDetail() {
   const [standings, setStandings] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Tab state: 'overview' | 'prizepool' | 'standings' | 'schedule' | 'rules'
-  const [activeTab, setActiveTab] = useState('overview');
+  // Tab state: 'format' | 'groups' | 'overview' | 'prizepool' | 'standings' | 'schedule' | 'rules'
+  const [activeTab, setActiveTab] = useState('format');
+
+  // Interactive Stage Timeline & Groups state
+  const [expandedRoundIdx, setExpandedRoundIdx] = useState(0);
+  const [selectedGroupIdx, setSelectedGroupIdx] = useState(0);
 
   // Terms acceptance checkbox state & modal states
   const [tcAccepted, setTcAccepted] = useState(false);
@@ -69,160 +73,98 @@ export default function TournamentDetail() {
   return (
     <div style={{ maxWidth: '1280px', margin: '2rem auto 4rem auto', padding: '0 1.5rem' }}>
       
-      {/* Back Button */}
-      <Link to="/tournaments" style={{ color: 'var(--text-muted)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', marginBottom: '1.5rem', fontFamily: 'var(--font-sub)', fontWeight: 600 }}>
-        <ArrowLeft size={16} /> Back to Tournaments Overview
-      </Link>
-
       {/* ------------------------------------------------------------- */}
-      {/* MAIN TWO-COLUMN HERO SECTION (LEFT OVERVIEW | RIGHT POSTER) */}
+      {/* HEADER SECTION */}
       {/* ------------------------------------------------------------- */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-        gap: '2rem',
-        alignItems: 'start',
-        marginBottom: '2.5rem'
-      }}>
+      <div style={{ marginBottom: '1.5rem' }}>
+        <Link to="/tournaments" style={{ color: 'var(--cyan)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.9rem', fontWeight: 600, marginBottom: '1rem' }}>
+          <ArrowLeft size={16} /> Back to Tournaments
+        </Link>
+      </div>
 
-        {/* LEFT COLUMN: OVERVIEW, FORMAT, DATES & REGISTRATION */}
-        <div className="glass-card" style={{ padding: '2rem', position: 'relative', overflow: 'hidden' }}>
-          
-          {/* Header Badges */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem', alignItems: 'center', marginBottom: '1.2rem' }}>
-            <span className={`badge ${status === 'Registration Open' ? 'badge-open' : status === 'Ongoing' ? 'badge-ongoing' : 'badge-completed'}`}>
-              {status}
-            </span>
-            <span style={{ background: 'rgba(0, 243, 255, 0.1)', color: 'var(--cyan)', border: '1px solid rgba(0, 243, 255, 0.3)', padding: '0.25rem 0.8rem', borderRadius: '4px', fontSize: '0.8rem', fontFamily: 'var(--font-heading)', fontWeight: 700 }}>
-              {format || 'Squad'} ({game_mode || 'Squad TPP'})
-            </span>
-            <span style={{ background: 'rgba(255, 183, 0, 0.1)', color: 'var(--gold)', border: '1px solid rgba(255, 183, 0, 0.3)', padding: '0.25rem 0.8rem', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 600 }}>
-              Hosted by: {organizer || 'ToxicNullified Official'}
-            </span>
-          </div>
+      {/* DUAL COLUMN SPLIT SCREEN: SPECIFICATIONS LEFT & POSTER RIGHT */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '2rem', marginBottom: '2.5rem' }} className="tourney-detail-grid">
 
-          {/* Tournament Title */}
-          <h1 style={{ fontSize: '2.4rem', color: '#fff', lineHeight: 1.2, marginBottom: '1.5rem', fontFamily: 'var(--font-heading)', textShadow: '0 0 20px rgba(0, 243, 255, 0.2)' }}>
-            {title}
-          </h1>
-
-          {/* KEY METRICS GRID (Prize Pool, Entry, Match Date, Registration Deadline) */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-            gap: '1rem',
-            background: 'rgba(6, 8, 12, 0.75)',
-            padding: '1.2rem',
-            borderRadius: '12px',
-            border: '1px solid rgba(0, 243, 255, 0.15)',
-            marginBottom: '1.8rem'
-          }}>
-            <div>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>
-                Total Prize Pool
+        {/* LEFT COLUMN */}
+        <div className="glass-card" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '0.8rem' }}>
+              <span className={`badge ${status === 'Registration Open' ? 'badge-open' : status === 'Ongoing' ? 'badge-ongoing' : 'badge-completed'}`}>
+                {status}
               </span>
-              <span style={{ fontSize: '1.6rem', fontWeight: 900, color: 'var(--gold)', fontFamily: 'var(--font-heading)', display: 'block', marginTop: '0.2rem' }}>
-                ₹ {Number(prize_pool).toLocaleString('en-IN')}
+              <span style={{ background: 'rgba(0, 243, 255, 0.1)', color: 'var(--cyan)', border: '1px solid rgba(0, 243, 255, 0.3)', padding: '0.2rem 0.7rem', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 700 }}>
+                {game_mode} ({format})
               </span>
             </div>
 
-            <div>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>
-                Entry Fee
-              </span>
-              <span style={{ fontSize: '1.4rem', fontWeight: 800, color: entry_fee === 0 ? 'var(--green)' : 'var(--cyan)', fontFamily: 'var(--font-heading)', display: 'block', marginTop: '0.2rem' }}>
-                {entry_fee === 0 ? 'FREE ENTRY' : `₹ ${entry_fee}`}
-              </span>
-            </div>
+            <h1 style={{ fontSize: '2.2rem', fontFamily: 'var(--font-heading)', color: '#fff', margin: '0 0 1rem 0', lineHeight: 1.2 }}>
+              {title}
+            </h1>
 
-            <div>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>
-                Match Date & Time
-              </span>
-              <span style={{ fontSize: '0.95rem', fontWeight: 700, color: '#fff', display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.4rem' }}>
-                <Calendar size={15} color="var(--cyan)" />
-                {new Date(start_date).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-              </span>
-            </div>
-
-            <div>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>
-                Reg. Deadline
-              </span>
-              <span style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--crimson)', display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.4rem' }}>
-                <Clock size={15} color="var(--crimson)" />
-                {reg_end_date ? new Date(reg_end_date).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Until Slots Fill'}
-              </span>
-            </div>
-          </div>
-
-          {/* MATCH FORMAT & SPECIFICATIONS LIST */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '1rem',
-            marginBottom: '1.8rem'
-          }}>
-            <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '0.9rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <Gamepad2 size={14} color="var(--cyan)" /> Format & Mode
-              </span>
-              <span style={{ color: '#fff', fontWeight: 700, fontSize: '0.95rem', marginTop: '0.2rem', display: 'block' }}>
-                {format} ({game_mode})
-              </span>
-            </div>
-
-            <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '0.9rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <MapPin size={14} color="var(--cyan)" /> Map Rotation
-              </span>
-              <span style={{ color: '#fff', fontWeight: 700, fontSize: '0.95rem', marginTop: '0.2rem', display: 'block' }}>
-                {map_rotation || 'Erangel, Rondo & Miramar'}
-              </span>
-            </div>
-
-            <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '0.9rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <Shield size={14} color="var(--green)" /> Device Policy
-              </span>
-              <span style={{ color: 'var(--green)', fontWeight: 700, fontSize: '0.95rem', marginTop: '0.2rem', display: 'block' }}>
-                Mobile Only (No Emulators)
-              </span>
-            </div>
-          </div>
-
-          {/* SLOTS CAPACITY PROGRESS BAR */}
-          <div style={{ marginBottom: '1.8rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
-              <span style={{ color: 'var(--text-muted)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <Users size={16} color="var(--cyan)" /> Registered Squads Status
-              </span>
-              <span style={{ color: 'var(--cyan)', fontWeight: 800 }}>
-                {registered_teams} / {max_teams} Teams ({filledPercent}% Filled)
-              </span>
-            </div>
-            <div style={{ height: '10px', background: 'rgba(255, 255, 255, 0.1)', borderRadius: '5px', overflow: 'hidden' }}>
-              <div style={{
-                width: `${filledPercent}%`,
-                height: '100%',
-                background: 'linear-gradient(90deg, #00f3ff, #00ff88)',
-                boxShadow: '0 0 10px rgba(0, 243, 255, 0.5)'
-              }} />
-            </div>
-          </div>
-
-          {/* TERMS CHECKBOX & REGISTRATION BUTTON */}
-          {status === 'Registration Open' && filledPercent < 100 ? (
+            {/* Quick Stats Banner */}
             <div style={{
-              background: 'rgba(0, 243, 255, 0.04)',
-              border: '1px solid rgba(0, 243, 255, 0.25)',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+              gap: '1rem',
+              background: 'rgba(6, 8, 12, 0.8)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
               borderRadius: '12px',
               padding: '1.2rem',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '1rem'
+              marginBottom: '1.8rem'
             }}>
-              <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.8rem', cursor: 'pointer' }}>
+              <div>
+                <span style={{ fontSize: '0.75rem', color: 'var(--gold)', fontWeight: 700, textTransform: 'uppercase' }}>Prize Pool</span>
+                <p style={{ margin: '0.2rem 0 0 0', fontSize: '1.4rem', fontWeight: 900, color: 'var(--gold)', fontFamily: 'var(--font-heading)' }}>
+                  ₹ {Number(prize_pool).toLocaleString('en-IN')}
+                </p>
+              </div>
+
+              <div>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>Entry Fee</span>
+                <p style={{ margin: '0.2rem 0 0 0', fontSize: '1.2rem', fontWeight: 800, color: '#fff' }}>
+                  {entry_fee === 0 ? 'FREE' : `₹ ${entry_fee}`}
+                </p>
+              </div>
+
+              <div>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>Slots Filled</span>
+                <p style={{ margin: '0.2rem 0 0 0', fontSize: '1.2rem', fontWeight: 800, color: 'var(--cyan)' }}>
+                  {registered_teams || 0} / {max_teams}
+                </p>
+              </div>
+
+              <div>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>Match Date</span>
+                <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.95rem', fontWeight: 700, color: '#fff' }}>
+                  {start_date ? new Date(start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'TBA'}
+                </p>
+              </div>
+            </div>
+
+            {/* Slot Registration Meter */}
+            <div style={{ marginBottom: '1.8rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.4rem' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Registration Capacity</span>
+                <span style={{ color: filledPercent >= 90 ? 'var(--crimson)' : 'var(--cyan)', fontWeight: 700 }}>
+                  {filledPercent}% Slots Reserved
+                </span>
+              </div>
+              <div style={{ width: '100%', height: '8px', background: 'rgba(255, 255, 255, 0.1)', borderRadius: '4px', overflow: 'hidden' }}>
+                <div style={{
+                  width: `${filledPercent}%`,
+                  height: '100%',
+                  background: filledPercent >= 90 ? 'var(--crimson)' : 'linear-gradient(90deg, var(--cyan), var(--green))',
+                  borderRadius: '4px',
+                  transition: 'width 0.5s ease'
+                }} />
+              </div>
+            </div>
+          </div>
+
+          {/* Registration Gate & T&C Acceptance */}
+          {status === 'Registration Open' && filledPercent < 100 ? (
+            <div style={{ background: 'rgba(0, 243, 255, 0.04)', border: '1px solid rgba(0, 243, 255, 0.2)', borderRadius: '12px', padding: '1.2rem' }}>
+              <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.8rem', cursor: 'pointer', marginBottom: '1rem' }}>
                 <input
                   type="checkbox"
                   checked={tcAccepted}
@@ -240,7 +182,7 @@ export default function TournamentDetail() {
                 className="btn-accent"
                 style={{
                   width: '100%',
-                  justify: 'center',
+                  justifyContent: 'center',
                   padding: '1rem',
                   fontSize: '1.1rem',
                   letterSpacing: '1px',
@@ -267,12 +209,10 @@ export default function TournamentDetail() {
               </p>
             </div>
           )}
-
         </div>
 
-        {/* RIGHT COLUMN: OFFICIAL TOURNAMENT POSTER FRAME */}
+        {/* RIGHT COLUMN: POSTER */}
         <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', height: '100%' }}>
-          
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <span style={{ fontSize: '0.85rem', color: 'var(--cyan)', fontFamily: 'var(--font-heading)', fontWeight: 700, letterSpacing: '1px', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
               <Award size={16} /> OFFICIAL POSTER
@@ -296,8 +236,6 @@ export default function TournamentDetail() {
               <Maximize2 size={13} /> View Fullscreen
             </button>
           </div>
-
-          {/* Poster Image Container */}
           <div
             onClick={() => setShowPosterLightbox(true)}
             style={{
@@ -312,7 +250,6 @@ export default function TournamentDetail() {
               background: '#06080c'
             }}
           >
-            {/* Blurred backdrop background */}
             <div style={{
               position: 'absolute',
               inset: 0,
@@ -322,8 +259,6 @@ export default function TournamentDetail() {
               filter: 'blur(16px) brightness(0.35)',
               transform: 'scale(1.15)'
             }} />
-
-            {/* Crisp foreground poster fitting 100% perfectly without cropping */}
             <img
               src={officialPoster}
               alt={`${title} Official Poster`}
@@ -336,33 +271,9 @@ export default function TournamentDetail() {
                 display: 'block',
                 transition: 'transform 0.4s ease'
               }}
-              onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.03)'}
-              onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
             />
-
-            {/* Hover overlay hint */}
-            <div style={{
-              position: 'absolute',
-              inset: 0,
-              background: 'linear-gradient(to top, rgba(10, 13, 20, 0.9) 0%, transparent 60%)',
-              display: 'flex',
-              alignItems: 'flex-end',
-              padding: '1.2rem',
-              pointerEvents: 'none'
-            }}>
-              <div>
-                <span style={{ color: '#fff', fontWeight: 700, fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                  <Maximize2 size={14} color="var(--cyan)" /> Click to Enlarge Poster
-                </span>
-                <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'block', marginTop: '0.2rem' }}>
-                  ToxicNullified Official Esports Graphic
-                </span>
-              </div>
-            </div>
           </div>
-
         </div>
-
       </div>
 
       {/* ------------------------------------------------------------- */}
@@ -376,6 +287,44 @@ export default function TournamentDetail() {
         overflowX: 'auto',
         paddingBottom: '0.5rem'
       }}>
+        <button
+          onClick={() => setActiveTab('format')}
+          style={{
+            background: activeTab === 'format' ? 'rgba(0, 243, 255, 0.15)' : 'none',
+            border: 'none',
+            borderBottom: activeTab === 'format' ? '2px solid var(--cyan)' : '2px solid transparent',
+            color: activeTab === 'format' ? 'var(--cyan)' : 'var(--text-muted)',
+            padding: '0.8rem 1.2rem',
+            fontFamily: 'var(--font-heading)',
+            fontSize: '0.9rem',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem'
+          }}
+        >
+          <Layers size={16} /> Format & Stages Roadmap
+        </button>
+
+        <button
+          onClick={() => setActiveTab('groups')}
+          style={{
+            background: activeTab === 'groups' ? 'rgba(192, 132, 252, 0.15)' : 'none',
+            border: 'none',
+            borderBottom: activeTab === 'groups' ? '2px solid #c084fc' : '2px solid transparent',
+            color: activeTab === 'groups' ? '#c084fc' : 'var(--text-muted)',
+            padding: '0.8rem 1.2rem',
+            fontFamily: 'var(--font-heading)',
+            fontSize: '0.9rem',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem'
+          }}
+        >
+          <Grid size={16} /> Team Groups & Divisions ({activeGroups.length})
+        </button>
+
         <button
           onClick={() => setActiveTab('overview')}
           style={{
@@ -392,7 +341,7 @@ export default function TournamentDetail() {
             gap: '0.5rem'
           }}
         >
-          <FileText size={16} /> Specifications & Overview
+          <FileText size={16} /> Specifications
         </button>
 
         <button
@@ -430,26 +379,7 @@ export default function TournamentDetail() {
             gap: '0.5rem'
           }}
         >
-          <ListOrdered size={16} /> Live Points Table ({standings.length})
-        </button>
-
-        <button
-          onClick={() => setActiveTab('schedule')}
-          style={{
-            background: activeTab === 'schedule' ? 'rgba(0, 243, 255, 0.15)' : 'none',
-            border: 'none',
-            borderBottom: activeTab === 'schedule' ? '2px solid var(--cyan)' : '2px solid transparent',
-            color: activeTab === 'schedule' ? 'var(--cyan)' : 'var(--text-muted)',
-            padding: '0.8rem 1.2rem',
-            fontFamily: 'var(--font-heading)',
-            fontSize: '0.9rem',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem'
-          }}
-        >
-          <Clock size={16} /> Schedule & Timeline
+          <ListOrdered size={16} /> Live Points Table
         </button>
 
         <button
@@ -468,7 +398,7 @@ export default function TournamentDetail() {
             gap: '0.5rem'
           }}
         >
-          <Shield size={16} /> Rules & Terms
+          <Shield size={16} /> Rules
         </button>
       </div>
 
@@ -476,7 +406,169 @@ export default function TournamentDetail() {
       {/* TAB CONTENT AREAS */}
       {/* ------------------------------------------------------------- */}
 
-      {/* 1. OVERVIEW & FORMAT TAB */}
+      {/* 1. FORMAT & STAGES TAB */}
+      {activeTab === 'format' && (
+        <div className="glass-card fade-in" style={{ padding: '2rem' }}>
+          
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+            <div>
+              <h3 style={{ color: 'var(--cyan)', margin: 0, fontFamily: 'var(--font-heading)', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <Layers size={22} /> Tournament Format & Stage Roadmap
+              </h3>
+              <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '0.3rem', display: 'block' }}>
+                Click on any round stage below to reveal match maps, schedules, and qualification rules.
+              </span>
+            </div>
+          </div>
+
+          <div style={{ position: 'relative', paddingLeft: '2rem' }}>
+            <div style={{
+              position: 'absolute',
+              left: '11px',
+              top: '20px',
+              bottom: '20px',
+              width: '2px',
+              background: 'linear-gradient(to bottom, var(--crimson), var(--cyan))',
+              boxShadow: '0 0 10px rgba(255, 70, 85, 0.5)',
+              zIndex: 1
+            }} />
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+              {activeRounds.map((round, idx) => {
+                const isExpanded = expandedRoundIdx === idx;
+                return (
+                  <div key={idx} style={{ position: 'relative' }}>
+                    <div style={{
+                      position: 'absolute',
+                      left: '-2rem',
+                      top: '18px',
+                      transform: 'translateX(-50%)',
+                      width: '12px',
+                      height: '12px',
+                      borderRadius: '50%',
+                      background: round.status === 'Completed' ? 'var(--green)' : round.status === 'Ongoing' ? 'var(--cyan)' : 'var(--crimson)',
+                      boxShadow: round.status === 'Completed' ? '0 0 10px var(--green)' : round.status === 'Ongoing' ? '0 0 10px var(--cyan)' : '0 0 10px var(--crimson)',
+                      border: '2px solid #0a0d14',
+                      zIndex: 2
+                    }} />
+
+                    <div
+                      onClick={() => setExpandedRoundIdx(isExpanded ? null : idx)}
+                      style={{
+                        background: isExpanded ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.04)',
+                        border: isExpanded ? '1px solid var(--cyan)' : '1px solid rgba(255, 255, 255, 0.1)',
+                        borderRadius: '10px',
+                        padding: '1.2rem 1.5rem',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease',
+                        boxShadow: isExpanded ? '0 0 25px rgba(0, 243, 255, 0.15)' : 'none'
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.8rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                          <h4 style={{ color: '#ffffff', margin: 0, fontSize: '1.15rem', fontWeight: 700, fontFamily: 'var(--font-heading)' }}>
+                            {round.name}
+                          </h4>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                          <span style={{ background: 'rgba(255, 255, 255, 0.08)', color: '#cbd5e1', padding: '0.4rem 0.9rem', borderRadius: '6px', fontSize: '0.85rem', fontWeight: 600, border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                            {round.dates}
+                          </span>
+                          {isExpanded ? <ChevronUp size={18} color="var(--cyan)" /> : <ChevronDown size={18} color="var(--text-muted)" />}
+                        </div>
+                      </div>
+
+                      {isExpanded && (
+                        <div style={{
+                          marginTop: '1.2rem',
+                          paddingTop: '1rem',
+                          borderTop: '1px dashed rgba(255, 255, 255, 0.1)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '0.8rem'
+                        }}>
+                          <p style={{ color: '#e2e8f0', fontSize: '0.95rem', margin: 0, lineHeight: 1.5 }}>{round.description}</p>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.8rem', marginTop: '0.4rem' }}>
+                            {round.map_schedule && (
+                              <div style={{ background: 'rgba(6, 8, 12, 0.6)', padding: '0.8rem 1rem', borderRadius: '8px', border: '1px solid rgba(0, 243, 255, 0.15)' }}>
+                                <span style={{ fontSize: '0.7rem', color: 'var(--cyan)', fontWeight: 700, textTransform: 'uppercase', display: 'block' }}>Map Rotation</span>
+                                <span style={{ color: '#fff', fontSize: '0.9rem', fontWeight: 600 }}>{round.map_schedule}</span>
+                              </div>
+                            )}
+                            {round.qualifying_slots && (
+                              <div style={{ background: 'rgba(6, 8, 12, 0.6)', padding: '0.8rem 1rem', borderRadius: '8px', border: '1px solid rgba(255, 183, 0, 0.15)' }}>
+                                <span style={{ fontSize: '0.7rem', color: 'var(--gold)', fontWeight: 700, textTransform: 'uppercase', display: 'block' }}>Qualification Rule</span>
+                                <span style={{ color: '#fff', fontSize: '0.9rem', fontWeight: 600 }}>{round.qualifying_slots}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 2. GROUPS & DIVISIONS TAB */}
+      {activeTab === 'groups' && (
+        <div className="glass-card fade-in" style={{ padding: '2rem' }}>
+          <div style={{ marginBottom: '1.5rem' }}>
+            <h3 style={{ color: '#c084fc', margin: 0, fontFamily: 'var(--font-heading)', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              <Grid size={22} /> Official Team Groups & Divisions
+            </h3>
+          </div>
+
+          {activeGroups && activeGroups.length > 0 ? (
+            <div>
+              <div style={{ display: 'flex', gap: '0.8rem', overflowX: 'auto', paddingBottom: '0.8rem', marginBottom: '1.5rem' }}>
+                {activeGroups.map((group, gIdx) => (
+                  <button
+                    key={gIdx}
+                    onClick={() => setSelectedGroupIdx(gIdx)}
+                    style={{
+                      background: selectedGroupIdx === gIdx ? 'linear-gradient(135deg, #a855f7, #6366f1)' : 'rgba(255, 255, 255, 0.05)',
+                      border: selectedGroupIdx === gIdx ? '1px solid #c084fc' : '1px solid rgba(255, 255, 255, 0.1)',
+                      color: '#ffffff',
+                      padding: '0.6rem 1.4rem',
+                      borderRadius: '30px',
+                      fontSize: '0.9rem',
+                      fontWeight: 700,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <Shield size={16} /> {group.name} ({group.teams ? group.teams.length : 0} Teams)
+                  </button>
+                ))}
+              </div>
+
+              {activeGroups[selectedGroupIdx] && (
+                <div>
+                  <h4 style={{ color: '#ffffff', marginBottom: '1rem' }}>Roster — {activeGroups[selectedGroupIdx].name}</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '1.2rem' }}>
+                    {activeGroups[selectedGroupIdx].teams.map((team, tIdx) => (
+                      <div key={tIdx} style={{ background: 'rgba(10, 13, 20, 0.8)', border: '1px solid rgba(192, 132, 252, 0.2)', borderRadius: '12px', padding: '1rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <img src={team.logo_url || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=150&q=80'} style={{ width: '52px', height: '52px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #c084fc' }} alt="logo" />
+                        <div>
+                          <h5 style={{ color: '#ffffff', margin: 0 }}>{team.team_name}</h5>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Captain: {team.captain_name}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>Group divisions will be published soon.</div>
+          )}
+        </div>
+      )}
+
+      {/* 3. OVERVIEW TAB */}
       {activeTab === 'overview' && (
         <div className="glass-card fade-in" style={{ padding: '2rem' }}>
           <h3 style={{ color: 'var(--cyan)', marginBottom: '1.5rem', fontFamily: 'var(--font-heading)' }}>
@@ -675,4 +767,3 @@ export default function TournamentDetail() {
     </div>
   );
 }
-

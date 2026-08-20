@@ -141,6 +141,8 @@ export const fetchTournamentById = async (id) => {
             rules: Array.isArray(data.rules) ? data.rules : [],
             schedule: Array.isArray(data.schedule) ? data.schedule : [],
             prize_breakdown: Array.isArray(data.prize_breakdown) ? data.prize_breakdown : [],
+            rounds_format: Array.isArray(data.rounds_format) ? data.rounds_format : [],
+            groups_data: Array.isArray(data.groups_data) ? data.groups_data : [],
             registered_teams: data.registered_teams || 0
           };
           standings = data.standings || [];
