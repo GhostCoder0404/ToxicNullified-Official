@@ -7,7 +7,8 @@ import {
 import { useAuth } from '../context/AuthContext';
 import {
   fetchAdminStats, fetchTournaments, fetchRegistrations, updateRegistrationStatus,
-  createTournament, updateTournament, deleteTournament, updateStandings, fetchTournamentById
+  createTournament, updateTournament, deleteTournament, updateStandings, fetchTournamentById,
+  uploadImage
 } from '../services/api';
 import { db } from '../services/firebase';
 import { collection, query as fbQuery, where, getDocs, deleteDoc, doc } from 'firebase/firestore';
@@ -141,8 +142,43 @@ export default function AdminDashboard() {
   };
 
   // -------------------------------------------------------------
-  // TOURNAMENT CRUD ACTIONS
+  // TOURNAMENT CRUD & IMAGE UPLOAD ACTIONS
   // -------------------------------------------------------------
+  const [uploadingPoster, setUploadingPoster] = useState(false);
+  const [uploadingBanner, setUploadingBanner] = useState(false);
+
+  const handlePosterUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploadingPoster(true);
+    try {
+      const url = await uploadImage(file, token);
+      setTourneyForm(prev => ({ ...prev, poster_url: url }));
+      showToast('Official Poster uploaded & preview loaded!', 'success');
+    } catch (err) {
+      console.error('Poster upload failed:', err);
+      showToast('Failed to upload poster image.', 'error');
+    } finally {
+      setUploadingPoster(false);
+    }
+  };
+
+  const handleBannerUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploadingBanner(true);
+    try {
+      const url = await uploadImage(file, token);
+      setTourneyForm(prev => ({ ...prev, banner_url: url }));
+      showToast('Cover Banner uploaded & preview loaded!', 'success');
+    } catch (err) {
+      console.error('Banner upload failed:', err);
+      showToast('Failed to upload banner image.', 'error');
+    } finally {
+      setUploadingBanner(false);
+    }
+  };
+
   const openCreateTourneyModal = () => {
     setEditingTourney(null);
     setTourneyForm({
@@ -847,14 +883,113 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              <div className="form-group">
-                <label className="form-label">Official Poster Image URL (Portrait Image on Right)</label>
-                <input type="url" value={tourneyForm.poster_url} onChange={e => setTourneyForm({ ...tourneyForm, poster_url: e.target.value })} className="form-input" placeholder="https://..." />
+              {/* OFFICIAL POSTER UPLOAD & URL */}
+              <div className="form-group" style={{ background: 'rgba(0, 243, 255, 0.03)', padding: '1rem', borderRadius: '10px', border: '1px solid rgba(0, 243, 255, 0.2)' }}>
+                <label className="form-label" style={{ color: 'var(--cyan)', fontWeight: 700 }}>
+                  Official Poster Image (Right Side Sidebar Display)
+                </label>
+                
+                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap', marginTop: '0.4rem', marginBottom: '0.6rem' }}>
+                  <input
+                    type="file"
+                    id="admin-poster-file-input"
+                    accept="image/*"
+                    onChange={handlePosterUpload}
+                    style={{ display: 'none' }}
+                  />
+                  <label
+                    htmlFor="admin-poster-file-input"
+                    className="btn-secondary"
+                    style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+                  >
+                    <Upload size={16} /> {uploadingPoster ? 'Uploading Poster...' : 'Upload Poster Image File'}
+                  </label>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Supported: JPG, PNG, WEBP (Max 5MB)</span>
+                </div>
+
+                <input
+                  type="text"
+                  value={tourneyForm.poster_url}
+                  onChange={e => setTourneyForm({ ...tourneyForm, poster_url: e.target.value })}
+                  className="form-input"
+                  placeholder="Or paste image URL (https://...)"
+                />
+
+                {/* Poster Live Preview */}
+                {tourneyForm.poster_url && (
+                  <div style={{ marginTop: '0.8rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <img
+                      src={tourneyForm.poster_url}
+                      alt="Poster Preview"
+                      style={{ width: '80px', height: '110px', objectFit: 'cover', borderRadius: '6px', border: '1px solid var(--cyan)' }}
+                      onError={(e) => e.target.style.display = 'none'}
+                    />
+                    <div>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--green)', fontWeight: 700, display: 'block' }}>✓ Live Poster Preview Active</span>
+                      <button
+                        type="button"
+                        onClick={() => setTourneyForm({ ...tourneyForm, poster_url: '' })}
+                        style={{ background: 'none', border: 'none', color: 'var(--crimson)', fontSize: '0.75rem', cursor: 'pointer', padding: 0, marginTop: '0.2rem' }}
+                      >
+                        Remove Image
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
-              <div className="form-group">
-                <label className="form-label">Cover Banner Image URL (Horizontal Image)</label>
-                <input type="url" value={tourneyForm.banner_url} onChange={e => setTourneyForm({ ...tourneyForm, banner_url: e.target.value })} className="form-input" placeholder="https://..." />
+              {/* COVER BANNER UPLOAD & URL */}
+              <div className="form-group" style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '1rem', borderRadius: '10px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                <label className="form-label" style={{ fontWeight: 700 }}>
+                  Cover Banner Image (Horizontal Header Image)
+                </label>
+                
+                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap', marginTop: '0.4rem', marginBottom: '0.6rem' }}>
+                  <input
+                    type="file"
+                    id="admin-banner-file-input"
+                    accept="image/*"
+                    onChange={handleBannerUpload}
+                    style={{ display: 'none' }}
+                  />
+                  <label
+                    htmlFor="admin-banner-file-input"
+                    className="btn-secondary"
+                    style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+                  >
+                    <Upload size={16} /> {uploadingBanner ? 'Uploading Banner...' : 'Upload Banner Image File'}
+                  </label>
+                </div>
+
+                <input
+                  type="text"
+                  value={tourneyForm.banner_url}
+                  onChange={e => setTourneyForm({ ...tourneyForm, banner_url: e.target.value })}
+                  className="form-input"
+                  placeholder="Or paste banner image URL (https://...)"
+                />
+
+                {/* Banner Live Preview */}
+                {tourneyForm.banner_url && (
+                  <div style={{ marginTop: '0.8rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <img
+                      src={tourneyForm.banner_url}
+                      alt="Banner Preview"
+                      style={{ width: '160px', height: '65px', objectFit: 'cover', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.2)' }}
+                      onError={(e) => e.target.style.display = 'none'}
+                    />
+                    <div>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--cyan)', fontWeight: 700, display: 'block' }}>✓ Cover Banner Active</span>
+                      <button
+                        type="button"
+                        onClick={() => setTourneyForm({ ...tourneyForm, banner_url: '' })}
+                        style={{ background: 'none', border: 'none', color: 'var(--crimson)', fontSize: '0.75rem', cursor: 'pointer', padding: 0, marginTop: '0.2rem' }}
+                      >
+                        Remove Image
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="form-group">

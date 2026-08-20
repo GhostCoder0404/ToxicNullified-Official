@@ -33,6 +33,22 @@ app.use(express.urlencoded({ extended: true }));
 // Serve static uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// -------------------------------------------------------------
+// IMAGE UPLOAD ENDPOINT FOR ADMIN POSTERS & BANNERS
+// -------------------------------------------------------------
+app.post('/api/upload', verifyToken, upload.single('image'), (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'No image file uploaded' });
+    }
+    const fileUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+    res.json({ success: true, url: fileUrl, filename: req.file.filename });
+  } catch (err) {
+    console.error('Image upload error:', err);
+    res.status(500).json({ success: false, message: 'Failed to upload image' });
+  }
+});
+
 // Health Check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', service: 'ToxicNullified API', timestamp: new Date().toISOString() });

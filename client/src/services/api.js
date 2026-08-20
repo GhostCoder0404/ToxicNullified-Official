@@ -303,6 +303,36 @@ export const updateStandings = async (id, standingsData, token) => {
   return { success: true, message: 'Standings updated successfully' };
 };
 
+export const uploadImage = async (file, token) => {
+  try {
+    const formData = new FormData();
+    formData.append('image', file);
+    const res = await fetch(`${API_BASE}/upload`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      body: formData
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success && data.url) {
+        return data.url;
+      }
+    }
+  } catch (err) {
+    console.warn('API upload error, using Data URL fallback:', err.message);
+  }
+
+  // Fallback: Data URL / Base64 for instant preview and offline/ephemeral hosts
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+};
+
 export const submitRegistration = async (formData) => {
   const res = await fetch(`${API_BASE}/registrations`, {
     method: 'POST',
